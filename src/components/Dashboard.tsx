@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Compass } from "lucide-react";
+import { Compass, Trash2 } from "lucide-react";
 import type { LoggedActivity } from "@/types/activity";
 import {
   entriesWithinDays,
@@ -48,8 +48,12 @@ const WEEKLY_TARGET_KG = PARIS_ALIGNED_DAILY_KG * 7;
 
 interface ToastState {
   message: string;
-  /** IDs added by the action this toast represents, so Undo can remove them. */
-  undoIds: string[];
+  /**
+   * Action that reverses what this toast announced (re-adds a deleted entry,
+   * removes a just-logged one, restores a cleared log…). Omit for toasts with
+   * nothing to undo. A closure keeps the undo logic next to the action.
+   */
+  undo?: () => void;
 }
 
 const cardClass =
@@ -76,6 +80,7 @@ export function Dashboard() {
     loadBaseline(),
   );
   const [retaking, setRetaking] = useState(false);
+  const [confirmingClear, setConfirmingClear] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
 
   useEffect(() => {
@@ -87,14 +92,16 @@ export function Dashboard() {
   }, [dailyBudgetKg]);
 
   function handleLog(entry: LoggedActivity) {
+    const snapshot = entries;
     setEntries((current) => appendEntry(current, entry));
     setToast({
       message: `Logged “${truncate(entry.description)}”`,
-      undoIds: [entry.id],
+      undo: () => setEntries(snapshot),
     });
   }
 
   function handleLogMany(newEntries: LoggedActivity[]) {
+    const snapshot = entries;
     setEntries((current) =>
       newEntries.reduce((acc, entry) => appendEntry(acc, entry), current),
     );
@@ -102,14 +109,34 @@ export function Dashboard() {
       message: `Added ${newEntries.length} ${
         newEntries.length === 1 ? "activity" : "activities"
       } from your receipt`,
-      undoIds: newEntries.map((entry) => entry.id),
+      undo: () => setEntries(snapshot),
+    });
+  }
+
+  function handleDelete(id: string) {
+    const snapshot = entries;
+    const removed = entries.find((entry) => entry.id === id);
+    setEntries((current) => current.filter((entry) => entry.id !== id));
+    setToast({
+      message: removed
+        ? `Removed “${truncate(removed.description)}”`
+        : "Removed entry",
+      undo: () => setEntries(snapshot),
+    });
+  }
+
+  function handleClearAll() {
+    const snapshot = entries;
+    setConfirmingClear(false);
+    setEntries([]);
+    setToast({
+      message: "Cleared all activity",
+      undo: () => setEntries(snapshot),
     });
   }
 
   function handleUndo() {
-    if (!toast) return;
-    const ids = new Set(toast.undoIds);
-    setEntries((current) => current.filter((entry) => !ids.has(entry.id)));
+    toast?.undo?.();
     setToast(null);
   }
 
@@ -119,7 +146,6 @@ export function Dashboard() {
     setRetaking(false);
     setToast({
       message: `Baseline set: ≈ ${result.annualTonnes.toFixed(1)} t/yr`,
-      undoIds: [],
     });
   }
 
@@ -267,13 +293,49 @@ export function Dashboard() {
           aria-labelledby="recent-heading"
           className="flex flex-col gap-3"
         >
-          <h2
-            id="recent-heading"
-            className="text-sm font-medium text-stone-500 dark:text-stone-400"
-          >
-            Recent activity
-          </h2>
-          <ActivityList entries={recentEntries.slice(0, 20)} />
+          <div className="flex items-center justify-between gap-3">
+            <h2
+              id="recent-heading"
+              className="text-sm font-medium text-stone-500 dark:text-stone-400"
+            >
+              Recent activity
+            </h2>
+            {entries.length > 0 &&
+              (confirmingClear ? (
+                <span className="flex items-center gap-2 text-xs">
+                  <span className="text-stone-500 dark:text-stone-400">
+                    Clear everything?
+                  </span>
+                  <button
+                    type="button"
+                    onClick={handleClearAll}
+                    className="rounded-md bg-rose-600 px-2 py-1 font-semibold text-white transition hover:bg-rose-700 focus-visible:ring-2 focus-visible:ring-rose-500"
+                  >
+                    Clear all
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingClear(false)}
+                    className="rounded-md px-2 py-1 font-medium text-stone-600 transition hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
+                  >
+                    Cancel
+                  </button>
+                </span>
+              ) : (
+                <button
+                  type="button"
+                  onClick={() => setConfirmingClear(true)}
+                  className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-stone-500 transition hover:text-rose-600 focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-stone-400 dark:hover:text-rose-400"
+                >
+                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                  Clear all
+                </button>
+              ))}
+          </div>
+          <ActivityList
+            entries={recentEntries.slice(0, 20)}
+            onDelete={handleDelete}
+          />
         </section>
       </div>
 
@@ -282,7 +344,7 @@ export function Dashboard() {
       {toast && (
         <Toast
           message={toast.message}
-          onUndo={toast.undoIds.length > 0 ? handleUndo : undefined}
+          onUndo={toast.undo ? handleUndo : undefined}
           onDismiss={() => setToast(null)}
         />
       )}

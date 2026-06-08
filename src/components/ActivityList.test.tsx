@@ -1,5 +1,5 @@
-import { render, screen } from "@testing-library/react";
-import { describe, expect, it } from "vitest";
+import { fireEvent, render, screen } from "@testing-library/react";
+import { describe, expect, it, vi } from "vitest";
 import { ActivityList } from "./ActivityList";
 import type { LoggedActivity } from "@/types/activity";
 
@@ -45,5 +45,19 @@ describe("ActivityList", () => {
       />,
     );
     expect(screen.queryByText(/swap/i)).not.toBeInTheDocument();
+  });
+
+  it("renders a remove button and calls onDelete with the entry id", () => {
+    const onDelete = vi.fn();
+    render(<ActivityList entries={[entry()]} onDelete={onDelete} />);
+    fireEvent.click(screen.getByRole("button", { name: /remove/i }));
+    expect(onDelete).toHaveBeenCalledWith("1");
+  });
+
+  it("has no remove button when onDelete is not provided", () => {
+    render(<ActivityList entries={[entry()]} />);
+    expect(
+      screen.queryByRole("button", { name: /remove/i }),
+    ).not.toBeInTheDocument();
   });
 });

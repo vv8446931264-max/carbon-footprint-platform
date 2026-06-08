@@ -1,4 +1,4 @@
-import { Lightbulb, Sprout } from "lucide-react";
+import { Lightbulb, Sprout, Trash2 } from "lucide-react";
 import type { LoggedActivity } from "@/types/activity";
 import { suggestSwap } from "@/lib/emissions/compare";
 import { estimateCostUsd } from "@/lib/emissions/cost";
@@ -6,6 +6,11 @@ import { CATEGORY_VISUALS } from "@/lib/ui/categories";
 
 interface ActivityListProps {
   entries: LoggedActivity[];
+  /**
+   * When provided, each entry shows a remove button. Optional so the list can
+   * also be used read-only (and so existing call sites/tests are unaffected).
+   */
+  onDelete?: (id: string) => void;
 }
 
 /**
@@ -13,7 +18,7 @@ interface ActivityListProps {
  * inline "swap" suggestion with a quantified carbon AND cash saving — the
  * what-if simulator surfaced contextually rather than as a separate page.
  */
-export function ActivityList({ entries }: ActivityListProps) {
+export function ActivityList({ entries, onDelete }: ActivityListProps) {
   if (entries.length === 0) {
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-stone-300 bg-white/50 px-6 py-10 text-center dark:border-stone-700 dark:bg-stone-900/40">
@@ -58,16 +63,28 @@ export function ActivityList({ entries }: ActivityListProps) {
                   </time>
                 </div>
               </div>
-              <span className="flex flex-col items-end whitespace-nowrap text-right">
-                <span className="text-sm font-semibold tabular-nums text-stone-900 dark:text-stone-100">
-                  {entry.emissionsKgCo2e.toFixed(2)} kg CO₂e
-                </span>
-                {costUsd > 0 && (
-                  <span className="text-xs tabular-nums text-stone-500 dark:text-stone-400">
-                    ≈ ${costUsd.toFixed(2)}
+              <div className="flex items-start gap-1.5">
+                <span className="flex flex-col items-end whitespace-nowrap text-right">
+                  <span className="text-sm font-semibold tabular-nums text-stone-900 dark:text-stone-100">
+                    {entry.emissionsKgCo2e.toFixed(2)} kg CO₂e
                   </span>
+                  {costUsd > 0 && (
+                    <span className="text-xs tabular-nums text-stone-500 dark:text-stone-400">
+                      ≈ ${costUsd.toFixed(2)}
+                    </span>
+                  )}
+                </span>
+                {onDelete && (
+                  <button
+                    type="button"
+                    onClick={() => onDelete(entry.id)}
+                    aria-label={`Remove “${entry.description}”`}
+                    className="-mr-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-md text-stone-400 transition hover:bg-rose-50 hover:text-rose-600 focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-stone-500 dark:hover:bg-rose-500/10 dark:hover:text-rose-400"
+                  >
+                    <Trash2 className="h-4 w-4" aria-hidden="true" />
+                  </button>
                 )}
-              </span>
+              </div>
             </div>
 
             {swap && (
