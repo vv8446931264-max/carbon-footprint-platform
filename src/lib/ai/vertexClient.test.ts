@@ -7,7 +7,9 @@ describe("extractJson", () => {
   });
 
   it("parses JSON wrapped in markdown fences", () => {
-    expect(extractJson('Here you go:\n```json\n{"a": 1}\n```')).toEqual({ a: 1 });
+    expect(extractJson('Here you go:\n```json\n{"a": 1}\n```')).toEqual({
+      a: 1,
+    });
   });
 
   it("parses a JSON array", () => {

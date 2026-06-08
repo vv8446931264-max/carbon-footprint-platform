@@ -42,8 +42,13 @@ export function ActivityList({ entries }: ActivityListProps) {
                   {CATEGORY_ICON[entry.activity.category]}
                 </span>
                 <div>
-                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">{entry.description}</p>
-                  <time dateTime={entry.loggedAt} className="text-xs text-zinc-500 dark:text-zinc-400">
+                  <p className="text-sm font-medium text-zinc-900 dark:text-zinc-100">
+                    {entry.description}
+                  </p>
+                  <time
+                    dateTime={entry.loggedAt}
+                    className="text-xs text-zinc-500 dark:text-zinc-400"
+                  >
                     {new Date(entry.loggedAt).toLocaleString()}
                   </time>
                 </div>
@@ -57,7 +62,8 @@ export function ActivityList({ entries }: ActivityListProps) {
               <p className="mt-3 rounded-lg bg-emerald-50 px-3 py-2 text-xs text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200">
                 💡 {swap.label}: save about{" "}
                 <strong>
-                  {swap.savingsKgCo2e.toFixed(2)} kg CO₂e ({swap.savingsPercent.toFixed(0)}%)
+                  {swap.savingsKgCo2e.toFixed(2)} kg CO₂e (
+                  {swap.savingsPercent.toFixed(0)}%)
                 </strong>{" "}
                 on this trip.
               </p>

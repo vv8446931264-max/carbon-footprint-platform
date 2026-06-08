@@ -1,7 +1,9 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  // Produces a minimal standalone server bundle — keeps the container
+  // image small and startup fast on Cloud Run.
+  output: "standalone",
 };
 
 export default nextConfig;

@@ -45,7 +45,8 @@ export function ActivityLogger({ onLog }: ActivityLoggerProps) {
       const data = (await response.json()) as ParseResponse | { error: string };
 
       if (!response.ok || "error" in data) {
-        const message = "error" in data ? data.error : "Could not understand that activity.";
+        const message =
+          "error" in data ? data.error : "Could not understand that activity.";
         throw new Error(message);
       }
 
@@ -54,20 +55,30 @@ export function ActivityLogger({ onLog }: ActivityLoggerProps) {
         loggedAt: new Date().toISOString(),
         description: data.description,
         activity: data.activity,
-        emissionsKgCo2e: data.emissionsKgCo2e ?? calculateEmissionsKgCo2e(data.activity),
+        emissionsKgCo2e:
+          data.emissionsKgCo2e ?? calculateEmissionsKgCo2e(data.activity),
       });
 
       setText("");
       setStatus("idle");
     } catch (error) {
       setStatus("error");
-      setErrorMessage(error instanceof Error ? error.message : "Something went wrong.");
+      setErrorMessage(
+        error instanceof Error ? error.message : "Something went wrong.",
+      );
     }
   }
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-3" aria-describedby={statusId}>
-      <label htmlFor={inputId} className="text-sm font-medium text-zinc-800 dark:text-zinc-100">
+    <form
+      onSubmit={handleSubmit}
+      className="flex flex-col gap-3"
+      aria-describedby={statusId}
+    >
+      <label
+        htmlFor={inputId}
+        className="text-sm font-medium text-zinc-800 dark:text-zinc-100"
+      >
         Describe an activity in your own words
       </label>
       <div className="flex flex-col gap-2 sm:flex-row">
@@ -89,8 +100,12 @@ export function ActivityLogger({ onLog }: ActivityLoggerProps) {
         </button>
       </div>
       <p id={statusId} role="status" aria-live="polite" className="text-sm">
-        {status === "loading" && <span className="text-zinc-500">Estimating emissions…</span>}
-        {status === "error" && <span className="text-red-600 dark:text-red-400">{errorMessage}</span>}
+        {status === "loading" && (
+          <span className="text-zinc-500">Estimating emissions…</span>
+        )}
+        {status === "error" && (
+          <span className="text-red-600 dark:text-red-400">{errorMessage}</span>
+        )}
       </p>
     </form>
   );

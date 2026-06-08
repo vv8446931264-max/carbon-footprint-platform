@@ -1,4 +1,7 @@
-import { GLOBAL_AVERAGE_ANNUAL_TONNES, tonnesToKg } from "@/lib/emissions/calculate";
+import {
+  GLOBAL_AVERAGE_ANNUAL_TONNES,
+  tonnesToKg,
+} from "@/lib/emissions/calculate";
 
 interface FootprintSummaryProps {
   totalKgCo2e: number;
@@ -10,7 +13,10 @@ interface FootprintSummaryProps {
  * per-capita average — gives people an intuitive sense of scale rather
  * than a bare kilogram figure.
  */
-export function FootprintSummary({ totalKgCo2e, periodDays }: FootprintSummaryProps) {
+export function FootprintSummary({
+  totalKgCo2e,
+  periodDays,
+}: FootprintSummaryProps) {
   const dailyAverageGlobal = tonnesToKg(GLOBAL_AVERAGE_ANNUAL_TONNES) / 365;
   const expectedForPeriod = dailyAverageGlobal * periodDays;
   const ratio = expectedForPeriod > 0 ? totalKgCo2e / expectedForPeriod : 0;
@@ -29,16 +35,23 @@ export function FootprintSummary({ totalKgCo2e, periodDays }: FootprintSummaryPr
       aria-labelledby="footprint-summary-heading"
       className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
     >
-      <h2 id="footprint-summary-heading" className="text-sm font-medium text-zinc-500 dark:text-zinc-400">
+      <h2
+        id="footprint-summary-heading"
+        className="text-sm font-medium text-zinc-500 dark:text-zinc-400"
+      >
         Your footprint — last {periodDays} day{periodDays === 1 ? "" : "s"}
       </h2>
       <p className="mt-2 flex items-baseline gap-2">
         <span className="text-4xl font-bold tabular-nums text-emerald-700 dark:text-emerald-400">
           {totalKgCo2e.toFixed(1)}
         </span>
-        <span className="text-lg text-zinc-500 dark:text-zinc-400">kg CO₂e</span>
+        <span className="text-lg text-zinc-500 dark:text-zinc-400">
+          kg CO₂e
+        </span>
       </p>
-      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">{comparisonText}</p>
+      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
+        {comparisonText}
+      </p>
     </section>
   );
 }

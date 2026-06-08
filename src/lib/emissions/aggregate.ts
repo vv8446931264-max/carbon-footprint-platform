@@ -26,9 +26,14 @@ export function totalEmissions(entries: LoggedActivity[]): number {
   return round(entries.reduce((sum, entry) => sum + entry.emissionsKgCo2e, 0));
 }
 
-export function entriesWithinDays(entries: LoggedActivity[], days: number): LoggedActivity[] {
+export function entriesWithinDays(
+  entries: LoggedActivity[],
+  days: number,
+): LoggedActivity[] {
   const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
-  return entries.filter((entry) => new Date(entry.loggedAt).getTime() >= cutoff);
+  return entries.filter(
+    (entry) => new Date(entry.loggedAt).getTime() >= cutoff,
+  );
 }
 
 function round(value: number): number {

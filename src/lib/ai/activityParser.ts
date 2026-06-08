@@ -15,8 +15,22 @@ const TRANSPORT_MODES = [
   "walk",
 ] as const;
 
-const ENERGY_SOURCES = ["grid_electricity", "natural_gas", "lpg", "renewable"] as const;
-const FOOD_TYPES = ["beef", "lamb", "pork", "chicken", "fish", "dairy", "vegetables", "grains"] as const;
+const ENERGY_SOURCES = [
+  "grid_electricity",
+  "natural_gas",
+  "lpg",
+  "renewable",
+] as const;
+const FOOD_TYPES = [
+  "beef",
+  "lamb",
+  "pork",
+  "chicken",
+  "fish",
+  "dairy",
+  "vegetables",
+  "grains",
+] as const;
 const WASTE_TYPES = ["landfill", "recycled", "composted"] as const;
 
 /**
@@ -54,7 +68,10 @@ const activitySchema = z.discriminatedUnion("category", [
 ]);
 
 const parsedResponseSchema = z.object({
-  category: z.enum(["transport", "energy", "food", "shopping", "waste"] as [ActivityCategory, ...ActivityCategory[]]),
+  category: z.enum(["transport", "energy", "food", "shopping", "waste"] as [
+    ActivityCategory,
+    ...ActivityCategory[],
+  ]),
   description: z.string().min(1).max(280),
   confidence: z.enum(["high", "medium", "low"]),
   activity: activitySchema,
@@ -83,7 +100,10 @@ If a quantity is not given, make a reasonable estimate appropriate to the activi
 confidence accordingly. Never invent a category that does not fit the description.`;
 
 export class ActivityParseError extends Error {
-  constructor(message: string, readonly cause?: unknown) {
+  constructor(
+    message: string,
+    readonly cause?: unknown,
+  ) {
     super(message);
     this.name = "ActivityParseError";
   }
@@ -94,13 +114,17 @@ export class ActivityParseError extends Error {
  * into a structured, schema-validated `Activity`. Throws `ActivityParseError`
  * if the model output cannot be safely trusted.
  */
-export async function parseActivityFromText(input: string): Promise<ParsedActivityResult> {
+export async function parseActivityFromText(
+  input: string,
+): Promise<ParsedActivityResult> {
   const trimmed = input.trim();
   if (!trimmed) {
     throw new ActivityParseError("Activity description must not be empty.");
   }
   if (trimmed.length > 500) {
-    throw new ActivityParseError("Activity description is too long (max 500 characters).");
+    throw new ActivityParseError(
+      "Activity description is too long (max 500 characters).",
+    );
   }
 
   let rawText: string;
@@ -122,11 +146,16 @@ export async function parseActivityFromText(input: string): Promise<ParsedActivi
 
   const parsed = parsedResponseSchema.safeParse(json);
   if (!parsed.success) {
-    throw new ActivityParseError("AI response did not match the expected activity schema.", parsed.error);
+    throw new ActivityParseError(
+      "AI response did not match the expected activity schema.",
+      parsed.error,
+    );
   }
 
   if (parsed.data.category !== parsed.data.activity.category) {
-    throw new ActivityParseError("AI response category mismatch between fields.");
+    throw new ActivityParseError(
+      "AI response category mismatch between fields.",
+    );
   }
 
   return {

@@ -1,9 +1,19 @@
 import { describe, expect, it } from "vitest";
-import { entriesWithinDays, totalEmissions, totalsByCategory } from "./aggregate";
+import {
+  entriesWithinDays,
+  totalEmissions,
+  totalsByCategory,
+} from "./aggregate";
 import type { LoggedActivity } from "@/types/activity";
 
-function entry(category: LoggedActivity["activity"]["category"], kg: number, daysAgo = 0): LoggedActivity {
-  const loggedAt = new Date(Date.now() - daysAgo * 24 * 60 * 60 * 1000).toISOString();
+function entry(
+  category: LoggedActivity["activity"]["category"],
+  kg: number,
+  daysAgo = 0,
+): LoggedActivity {
+  const loggedAt = new Date(
+    Date.now() - daysAgo * 24 * 60 * 60 * 1000,
+  ).toISOString();
   return {
     id: `${category}-${kg}-${daysAgo}`,
     loggedAt,
@@ -18,7 +28,11 @@ function entry(category: LoggedActivity["activity"]["category"], kg: number, day
 
 describe("totalsByCategory", () => {
   it("sums emissions per category and sorts descending", () => {
-    const totals = totalsByCategory([entry("transport", 5), entry("energy", 9), entry("transport", 3)]);
+    const totals = totalsByCategory([
+      entry("transport", 5),
+      entry("energy", 9),
+      entry("transport", 3),
+    ]);
     expect(totals).toEqual([
       { category: "energy", kgCo2e: 9 },
       { category: "transport", kgCo2e: 8 },
@@ -32,7 +46,9 @@ describe("totalsByCategory", () => {
 
 describe("totalEmissions", () => {
   it("sums all entries", () => {
-    expect(totalEmissions([entry("transport", 1.5), entry("energy", 2.25)])).toBe(3.75);
+    expect(
+      totalEmissions([entry("transport", 1.5), entry("energy", 2.25)]),
+    ).toBe(3.75);
   });
 });
 

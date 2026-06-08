@@ -14,7 +14,8 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Carbon Footprint Coach",
-  description: "Track, understand, and reduce your personal carbon footprint with AI-powered insights.",
+  description:
+    "Track, understand, and reduce your personal carbon footprint with AI-powered insights.",
 };
 
 export default function RootLayout({

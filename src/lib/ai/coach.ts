@@ -21,7 +21,10 @@ Reply with a single JSON object and nothing else (no markdown fences, no comment
 Provide between 2 and 5 tips, each tied to one of the categories given.`;
 
 export class CoachReportError extends Error {
-  constructor(message: string, readonly cause?: unknown) {
+  constructor(
+    message: string,
+    readonly cause?: unknown,
+  ) {
     super(message);
     this.name = "CoachReportError";
   }
@@ -32,9 +35,13 @@ export class CoachReportError extends Error {
  * (already-computed) emissions data. The model never sees raw user PII —
  * only category-level totals — which keeps the prompt minimal and safe.
  */
-export async function generateCoachReport(input: CoachReportInput): Promise<CoachReport> {
+export async function generateCoachReport(
+  input: CoachReportInput,
+): Promise<CoachReport> {
   if (input.totalKgCo2e < 0 || input.periodDays <= 0) {
-    throw new CoachReportError("Invalid report input: totals and period must be positive.");
+    throw new CoachReportError(
+      "Invalid report input: totals and period must be positive.",
+    );
   }
 
   const categorySummary = input.topCategories
@@ -64,7 +71,10 @@ Write the JSON report now.`;
 
   const parsed = coachReportSchema.safeParse(json);
   if (!parsed.success) {
-    throw new CoachReportError("AI response did not match the expected report schema.", parsed.error);
+    throw new CoachReportError(
+      "AI response did not match the expected report schema.",
+      parsed.error,
+    );
   }
 
   return parsed.data;

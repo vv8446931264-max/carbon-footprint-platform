@@ -20,7 +20,10 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Request body must be valid JSON." },
+      { status: 400 },
+    );
   }
 
   const parsedRequest = requestSchema.safeParse(body);
@@ -40,6 +43,9 @@ export async function POST(request: Request) {
     }
 
     console.error("Unexpected error generating coach report:", error);
-    return NextResponse.json({ error: "Something went wrong while generating the report." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Something went wrong while generating the report." },
+      { status: 500 },
+    );
   }
 }

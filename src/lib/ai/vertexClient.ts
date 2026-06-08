@@ -28,14 +28,17 @@ function getClient(): GoogleGenAI {
   return cachedClient;
 }
 
-const MODEL_NAME = process.env.GCP_GEMINI_MODEL ?? "gemini-2.0-flash-001";
+const MODEL_NAME = process.env.GCP_GEMINI_MODEL ?? "gemini-2.5-flash";
 
 /**
  * Sends a prompt to Gemini via Vertex AI and returns the raw text response.
  * Centralizing this call makes it easy to add caching, retries, or logging
  * in one place rather than scattering `generateContent` calls across routes.
  */
-export async function generateText(prompt: string, systemInstruction?: string): Promise<string> {
+export async function generateText(
+  prompt: string,
+  systemInstruction?: string,
+): Promise<string> {
   const client = getClient();
 
   const response = await client.models.generateContent({
@@ -45,7 +48,12 @@ export async function generateText(prompt: string, systemInstruction?: string): 
       temperature: 0.2,
       maxOutputTokens: 1024,
       ...(systemInstruction
-        ? { systemInstruction: { role: "system", parts: [{ text: systemInstruction }] } }
+        ? {
+            systemInstruction: {
+              role: "system",
+              parts: [{ text: systemInstruction }],
+            },
+          }
         : {}),
     },
   });

@@ -36,7 +36,10 @@ export const FOOD_FACTORS: Record<FoodType, number> = {
   grains: 1.4,
 };
 
-export const WASTE_FACTORS: Record<"landfill" | "recycled" | "composted", number> = {
+export const WASTE_FACTORS: Record<
+  "landfill" | "recycled" | "composted",
+  number
+> = {
   landfill: 0.58,
   recycled: 0.1,
   composted: 0.05,

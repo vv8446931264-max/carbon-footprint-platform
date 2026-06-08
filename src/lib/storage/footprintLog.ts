@@ -8,7 +8,8 @@ const STORAGE_KEY = "carbon-footprint-log:v1";
  * components, and so it can be unit-tested without a browser.
  */
 export function loadLog(storage?: Pick<Storage, "getItem">): LoggedActivity[] {
-  const target = storage ?? (typeof window === "undefined" ? null : window.localStorage);
+  const target =
+    storage ?? (typeof window === "undefined" ? null : window.localStorage);
   if (!target) return [];
 
   const raw = target.getItem(STORAGE_KEY);
@@ -22,8 +23,12 @@ export function loadLog(storage?: Pick<Storage, "getItem">): LoggedActivity[] {
   }
 }
 
-export function saveLog(entries: LoggedActivity[], storage?: Pick<Storage, "setItem">): void {
-  const target = storage ?? (typeof window === "undefined" ? null : window.localStorage);
+export function saveLog(
+  entries: LoggedActivity[],
+  storage?: Pick<Storage, "setItem">,
+): void {
+  const target =
+    storage ?? (typeof window === "undefined" ? null : window.localStorage);
   if (!target) return;
 
   target.setItem(STORAGE_KEY, JSON.stringify(entries));

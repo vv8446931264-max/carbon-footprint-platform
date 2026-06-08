@@ -9,7 +9,9 @@ export interface SwapSuggestion {
   savingsPercent: number;
 }
 
-const TRANSPORT_ALTERNATIVES: Partial<Record<TransportActivity["mode"], TransportActivity["mode"]>> = {
+const TRANSPORT_ALTERNATIVES: Partial<
+  Record<TransportActivity["mode"], TransportActivity["mode"]>
+> = {
   car_petrol: "train",
   car_diesel: "train",
   flight_short: "train",

@@ -1,4 +1,9 @@
-export type ActivityCategory = "transport" | "energy" | "food" | "shopping" | "waste";
+export type ActivityCategory =
+  | "transport"
+  | "energy"
+  | "food"
+  | "shopping"
+  | "waste";
 
 export type TransportMode =
   | "car_petrol"
@@ -11,9 +16,21 @@ export type TransportMode =
   | "bike"
   | "walk";
 
-export type EnergySource = "grid_electricity" | "natural_gas" | "lpg" | "renewable";
+export type EnergySource =
+  | "grid_electricity"
+  | "natural_gas"
+  | "lpg"
+  | "renewable";
 
-export type FoodType = "beef" | "lamb" | "pork" | "chicken" | "fish" | "dairy" | "vegetables" | "grains";
+export type FoodType =
+  | "beef"
+  | "lamb"
+  | "pork"
+  | "chicken"
+  | "fish"
+  | "dairy"
+  | "vegetables"
+  | "grains";
 
 export interface TransportActivity {
   category: "transport";

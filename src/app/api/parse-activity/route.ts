@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { ActivityParseError, parseActivityFromText } from "@/lib/ai/activityParser";
+import {
+  ActivityParseError,
+  parseActivityFromText,
+} from "@/lib/ai/activityParser";
 import { calculateEmissionsKgCo2e } from "@/lib/emissions/calculate";
 
 const requestSchema = z.object({
@@ -12,7 +15,10 @@ export async function POST(request: Request) {
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: "Request body must be valid JSON." }, { status: 400 });
+    return NextResponse.json(
+      { error: "Request body must be valid JSON." },
+      { status: 400 },
+    );
   }
 
   const parsedRequest = requestSchema.safeParse(body);
@@ -37,6 +43,9 @@ export async function POST(request: Request) {
     }
 
     console.error("Unexpected error parsing activity:", error);
-    return NextResponse.json({ error: "Something went wrong while parsing the activity." }, { status: 500 });
+    return NextResponse.json(
+      { error: "Something went wrong while parsing the activity." },
+      { status: 500 },
+    );
   }
 }
