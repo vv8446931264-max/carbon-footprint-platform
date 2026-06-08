@@ -7,29 +7,56 @@ import {
   totalEmissions,
   totalsByCategory,
 } from "@/lib/emissions/aggregate";
+import { suggestSwap } from "@/lib/emissions/compare";
+import {
+  allAchievements,
+  currentStreak,
+  dailyTotals,
+  unlockedAchievements,
+} from "@/lib/gamification/streaks";
 import { appendEntry, loadLog, saveLog } from "@/lib/storage/footprintLog";
+import { loadDailyBudget, saveDailyBudget } from "@/lib/storage/goal";
 import { ActivityLogger } from "./ActivityLogger";
 import { ActivityList } from "./ActivityList";
 import { CategoryBreakdown } from "./CategoryBreakdown";
 import { CoachPanel } from "./CoachPanel";
 import { FootprintSummary } from "./FootprintSummary";
+import { GoalTracker } from "./GoalTracker";
+import { ImpactCardShare } from "./ImpactCardShare";
 
 const PERIOD_DAYS = 30;
 
+const CATEGORY_LABELS: Record<LoggedActivity["activity"]["category"], string> =
+  {
+    transport: "Transport",
+    energy: "Energy",
+    food: "Food",
+    shopping: "Shopping",
+    waste: "Waste",
+  };
+
 /**
- * Top-level client component that owns the activity log state and derives
- * every view (summary, chart, coach input) from it. Persists to localStorage
- * so a person's data survives reloads without needing a backend for the demo.
+ * Top-level client component that owns the activity log + goal state and
+ * derives every view (summary, chart, streaks, coach input, share card)
+ * from it. Persists to localStorage so a person's data survives reloads
+ * without needing a backend for the demo.
  */
 export function Dashboard() {
   // Lazy initializer runs once on the client during the first render, so the
   // log is available immediately without an extra effect-driven re-render.
   // loadLog/saveLog are no-ops on the server (guarded inside the storage module).
   const [entries, setEntries] = useState<LoggedActivity[]>(() => loadLog());
+  const [dailyBudgetKg, setDailyBudgetKg] = useState<number>(() =>
+    loadDailyBudget(),
+  );
 
   useEffect(() => {
     saveLog(entries);
   }, [entries]);
+
+  useEffect(() => {
+    saveDailyBudget(dailyBudgetKg);
+  }, [dailyBudgetKg]);
 
   function handleLog(entry: LoggedActivity) {
     setEntries((current) => appendEntry(current, entry));
@@ -38,6 +65,23 @@ export function Dashboard() {
   const recentEntries = entriesWithinDays(entries, PERIOD_DAYS);
   const total = totalEmissions(recentEntries);
   const categoryTotals = totalsByCategory(recentEntries);
+
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayKg =
+    dailyTotals(entries).find((d) => d.date === todayKey)?.kgCo2e ?? 0;
+  const streak = currentStreak(entries, dailyBudgetKg);
+  const hasSwappableEntry = entries.some(
+    (entry) => suggestSwap(entry.activity) !== null,
+  );
+  const achievements = unlockedAchievements({
+    entryCount: entries.length,
+    streak,
+    hasSwappableEntry,
+  });
+
+  const topCategoryLabel = categoryTotals[0]
+    ? CATEGORY_LABELS[categoryTotals[0].category]
+    : null;
 
   return (
     <div className="flex w-full max-w-4xl flex-col gap-6 px-4 py-10 sm:px-8">
@@ -48,6 +92,10 @@ export function Dashboard() {
         <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
           Log everyday activities in plain language and get a personalized
           picture of your impact.
+        </p>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+          {achievements.length} / {allAchievements().length} achievements
+          unlocked
         </p>
       </header>
 
@@ -61,6 +109,14 @@ export function Dashboard() {
         <ActivityLogger onLog={handleLog} />
       </section>
 
+      <GoalTracker
+        dailyBudgetKg={dailyBudgetKg}
+        onChangeBudget={setDailyBudgetKg}
+        todayKg={todayKg}
+        streak={streak}
+        achievements={achievements}
+      />
+
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
         <FootprintSummary totalKgCo2e={total} periodDays={PERIOD_DAYS} />
         <CoachPanel
@@ -71,6 +127,15 @@ export function Dashboard() {
       </div>
 
       <CategoryBreakdown totals={categoryTotals} />
+
+      <ImpactCardShare
+        data={{
+          totalKgCo2e: total,
+          periodDays: PERIOD_DAYS,
+          streak,
+          topCategoryLabel,
+        }}
+      />
 
       <section aria-labelledby="recent-heading" className="flex flex-col gap-3">
         <h2
