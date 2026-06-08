@@ -39,12 +39,23 @@ export async function POST(request: Request) {
     });
   } catch (error) {
     if (error instanceof ActivityParseError) {
-      return NextResponse.json({ error: error.message }, { status: 422 });
+      // Log the precise internal reason (with cause) for debugging, but only
+      // ever send the friendly, pre-vetted `userMessage` to the client — raw
+      // model output / Zod error details should never reach the browser.
+      console.warn(
+        "Activity parse guardrail triggered:",
+        error.message,
+        error.cause,
+      );
+      return NextResponse.json({ error: error.userMessage }, { status: 422 });
     }
 
     console.error("Unexpected error parsing activity:", error);
     return NextResponse.json(
-      { error: "Something went wrong while parsing the activity." },
+      {
+        error:
+          "Something went wrong on our end while parsing that activity. Please try again.",
+      },
       { status: 500 },
     );
   }
