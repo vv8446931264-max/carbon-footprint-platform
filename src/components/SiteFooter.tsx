@@ -7,7 +7,7 @@ import { Leaf, Lock } from "lucide-react";
 export function SiteFooter() {
   return (
     <footer className="mt-4 w-full border-t border-stone-200/70 dark:border-stone-800/70">
-      <div className="mx-auto flex w-full max-w-4xl flex-col gap-4 px-4 py-8 text-xs text-stone-500 dark:text-stone-400 sm:px-8">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-4 px-4 py-8 text-xs text-stone-500 dark:text-stone-400 sm:px-8">
         <div className="flex items-center gap-2 text-stone-700 dark:text-stone-200">
           <Leaf
             className="h-4 w-4 text-emerald-600 dark:text-emerald-400"

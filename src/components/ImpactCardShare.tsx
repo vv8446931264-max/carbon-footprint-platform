@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
+import { Download, Share2 } from "lucide-react";
 import {
   drawImpactCard,
   IMPACT_CARD_DIMENSIONS,
@@ -50,15 +51,19 @@ export function ImpactCardShare({ data }: ImpactCardShareProps) {
   return (
     <section
       aria-labelledby="share-heading"
-      className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900"
     >
       <h2
         id="share-heading"
-        className="text-sm font-medium text-zinc-500 dark:text-zinc-400"
+        className="flex items-center gap-2 text-sm font-medium text-stone-500 dark:text-stone-400"
       >
+        <Share2
+          className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
+          aria-hidden="true"
+        />
         Share your progress
       </h2>
-      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
+      <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">
         Generate a shareable image summarizing your impact — perfect for
         inspiring others.
       </p>
@@ -67,16 +72,18 @@ export function ImpactCardShare({ data }: ImpactCardShareProps) {
         <button
           type="button"
           onClick={handleGenerate}
-          className="rounded-lg bg-zinc-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-emerald-500 dark:bg-emerald-600 dark:hover:bg-emerald-700"
+          className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-500"
         >
+          <Share2 className="h-3.5 w-3.5" aria-hidden="true" />
           Generate impact card
         </button>
         <button
           type="button"
           onClick={handleDownload}
           disabled={status !== "ready"}
-          className="rounded-lg border border-zinc-300 px-3 py-1.5 text-xs font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
         >
+          <Download className="h-3.5 w-3.5" aria-hidden="true" />
           Download PNG
         </button>
       </div>
@@ -98,7 +105,7 @@ export function ImpactCardShare({ data }: ImpactCardShareProps) {
             ? `Shareable card showing ${data.totalKgCo2e.toFixed(1)} kilograms of CO2 equivalent over ${data.periodDays} days and a ${data.streak}-day streak`
             : "Impact card preview, not yet generated"
         }
-        className="mt-4 w-full max-w-xs rounded-xl border border-zinc-200 dark:border-zinc-800"
+        className="mt-4 w-full max-w-xs rounded-xl border border-stone-200 dark:border-stone-800"
       />
     </section>
   );
