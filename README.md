@@ -5,6 +5,76 @@ footprint — built for the _[Challenge 3] Carbon Footprint Awareness Platform_ 
 
 **Live demo:** https://carbon-footprint-platform-1053195634368.us-central1.run.app
 
+---
+
+## Chosen vertical
+
+**[Challenge 3] Carbon Footprint Awareness Platform.** The persona is a **personal
+"carbon coach"**: an everyday person who wants to understand, track, and gradually reduce
+their carbon footprint without spreadsheets, carbon-accounting jargon, or guilt. The whole
+product is designed around lowering the friction of *logging* and raising the usefulness of
+the *insight* a person gets back.
+
+## Approach and logic
+
+The core idea is a pipeline: **messy human input → structured activity → transparent math →
+personalized, context-aware insight.**
+
+1. **Capture (low friction).** A person logs an activity in three ways: plain language
+   ("drove 12 km and had a beef burger"), a **photo of a receipt/bill** (Gemini Vision), or
+   by accepting a suggested swap. AI is used only for the hard part — turning fuzzy input
+   into structure — never for the arithmetic.
+2. **Structure (trustworthy).** All AI output is forced through a single **Zod schema**
+   (`lib/ai/activitySchema.ts`). Anything the model hallucinates (bad category, NaN,
+   out-of-range number) is rejected before it is trusted. A self-correcting retry recovers
+   transient formatting slips automatically.
+3. **Quantify (no black boxes).** A small, pure, fully-tested engine
+   (`lib/emissions/*`) converts each structured activity into **kg CO₂e and an estimated
+   dollar cost** using published emission/cost factors — deterministic and auditable.
+4. **Decide based on user context.** Insight adapts to the individual: swap suggestions
+   only appear when a *lower-carbon, often cheaper* alternative exists for that specific
+   activity; the streak counter is measured against the user's *own* daily budget;
+   achievements unlock from *their* behaviour; the AI coach is prompted with *their* top
+   categories. This is the "logical decision-making based on user context" the brief asks
+   for — the app reacts to who you are and what you logged, not a fixed script.
+5. **Motivate (behaviour change).** Carbon budget, streaks, achievements, "greener *and*
+   cheaper" framing, and a shareable impact card turn a one-off number into a habit loop.
+
+## How the solution works
+
+- **Frontend + API in one Next.js 16 app.** Client components (`components/`) own the UI and
+  persist the log to `localStorage`; thin server route handlers (`app/api/*`) sit at the
+  HTTP boundary.
+- **Each AI request** is rate-limited → Zod-validated → handed to a `lib/ai/*` service →
+  the structured result is enriched server-side with emissions + cost → returned as typed
+  JSON (or a clean, user-safe error). Identical prompts are served from an in-memory
+  TTL+LRU cache so the same activity never costs Vertex AI credits twice.
+- **Vertex AI / Gemini** (`@google/genai`) powers three things: natural-language parsing,
+  multimodal receipt reading, and the coaching report. Auth is via the Cloud Run service
+  account's IAM role — **no API keys anywhere**.
+- **Deployed** as a containerized (Docker, standalone output) service on **GCP Cloud Run**.
+
+See [`ARCHITECTURE.md`](./ARCHITECTURE.md) for the full diagram and the reasoning behind
+each layer.
+
+## Assumptions made
+
+- **Emission & cost factors are simplified published averages** (DEFRA/EPA-style) chosen for
+  a believable demo, not region-specific precision; they live in one place
+  (`lib/emissions/factors.ts`, `cost.ts`) and are trivial to refine.
+- **No accounts/backend by design.** For a hackathon demo, a person's log lives in
+  `localStorage` — zero sign-up friction and no PII to secure. The storage layer is
+  deliberately isolated so it could be swapped for a real database later.
+- **One activity per text entry.** When a sentence mentions several things, the parser keeps
+  the single highest-impact item and notes the rest in the description, rather than guessing
+  quantities for everything (it lowers its confidence to signal this).
+- **Costs are shown in USD** and treat shopping spend as its own cost; waste is treated as
+  free to the individual.
+- **Rate limiting is per-instance** (in-memory) — a first line of defence against cost
+  runaway, not a globally-strict quota; the interface is Redis-swappable.
+
+---
+
 ## What it does
 
 - **Natural-language activity logging** — describe an activity in plain English
