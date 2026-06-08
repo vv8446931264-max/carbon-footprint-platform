@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Compass, Trash2 } from "lucide-react";
+import { Compass, Download, Trash2 } from "lucide-react";
 import type { LoggedActivity } from "@/types/activity";
 import {
   entriesWithinDays,
@@ -19,6 +19,7 @@ import {
   unlockedAchievements,
 } from "@/lib/gamification/streaks";
 import { appendEntry, loadLog, saveLog } from "@/lib/storage/footprintLog";
+import { serializeLog } from "@/lib/storage/exportLog";
 import {
   loadBaseline,
   saveBaseline,
@@ -135,6 +136,17 @@ export function Dashboard() {
     });
   }
 
+  function handleExport() {
+    const json = serializeLog(entries);
+    const blob = new Blob([json], { type: "application/json" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `carbon-coach-data-${new Date().toISOString().slice(0, 10)}.json`;
+    link.click();
+    URL.revokeObjectURL(url);
+  }
+
   function handleUndo() {
     toast?.undo?.();
     setToast(null);
@@ -207,7 +219,7 @@ export function Dashboard() {
             Your carbon dashboard
           </h1>
           <p className="mt-1 max-w-2xl text-sm text-stone-600 dark:text-stone-400">
-            Log everyday activities in plain language — or scan a receipt — and
+            Log everyday activities in plain language, or scan a receipt, and
             see a clear, personalized picture of your impact.
           </p>
         </div>
@@ -337,14 +349,25 @@ export function Dashboard() {
                   </button>
                 </span>
               ) : (
-                <button
-                  type="button"
-                  onClick={() => setConfirmingClear(true)}
-                  className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-stone-500 transition hover:text-rose-600 focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-stone-400 dark:hover:text-rose-400"
-                >
-                  <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                  Clear all
-                </button>
+                <span className="flex items-center gap-1">
+                  <button
+                    type="button"
+                    onClick={handleExport}
+                    className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-stone-500 transition hover:text-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-stone-400 dark:hover:text-emerald-400"
+                    title="Download your activity log as a JSON file"
+                  >
+                    <Download className="h-3.5 w-3.5" aria-hidden="true" />
+                    Export
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmingClear(true)}
+                    className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-stone-500 transition hover:text-rose-600 focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-stone-400 dark:hover:text-rose-400"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
+                    Clear all
+                  </button>
+                </span>
               ))}
           </div>
           <ActivityList

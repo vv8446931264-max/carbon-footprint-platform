@@ -64,7 +64,7 @@ export function ImpactCardShare({ data }: ImpactCardShareProps) {
         Share your progress
       </h2>
       <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">
-        Generate a shareable image summarizing your impact — perfect for
+        Generate a shareable image summarizing your impact, perfect for
         inspiring others.
       </p>
 

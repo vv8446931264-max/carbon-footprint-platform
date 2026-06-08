@@ -151,7 +151,7 @@ export function ActivityLogger({ onLog }: ActivityLoggerProps) {
         )}
         {status === "idle" && lowConfidence && (
           <span className="text-amber-700 dark:text-amber-400">
-            Logged as a best guess — add an amount or detail for a more accurate
+            Logged as a best guess. Add an amount or detail for a more accurate
             estimate.
           </span>
         )}

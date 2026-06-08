@@ -29,16 +29,16 @@ export function Methodology() {
           <strong>emission factors</strong> (DEFRA / EPA-style figures):
           transport per km, energy per kWh, food per kg, shopping per dollar of
           spend, and waste per kg. The maths is deterministic and lives in a
-          small, fully unit-tested engine — the AI is used only to turn your
-          free text or a receipt photo into structured data, never to invent the
+          small, fully unit-tested engine. The AI is used only to turn your free
+          text or a receipt photo into structured data, never to invent the
           numbers.
         </p>
         <p>
           Your progress is measured against a{" "}
           <strong>science-based target of ~2 tonnes CO₂e per year</strong>, the
           per-person level broadly consistent with keeping warming well below 2
-          °C — a more meaningful goal than simply beating today&apos;s global
-          average of ~4.7 t/year.
+          °C. It is a more meaningful goal than simply beating today&apos;s
+          global average of ~4.7 t/year.
         </p>
         <p className="text-xs text-stone-500 dark:text-stone-400">
           <strong>Limitations:</strong> these are illustrative averages, not

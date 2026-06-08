@@ -71,7 +71,7 @@ export function FootprintSummary({
     context =
       "Log an activity to see how you're tracking against a Paris-aligned, ~2-tonne-a-year lifestyle.";
   } else if (underTarget) {
-    context = `On track — at this pace you'd stay within the Paris-aligned 2 t/year target${
+    context = `On track. At this pace you'd stay within the Paris-aligned 2 t/year target${
       vsAveragePct > 0
         ? `, about ${vsAveragePct}% below the global average`
         : ""

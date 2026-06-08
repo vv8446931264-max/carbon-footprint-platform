@@ -54,7 +54,7 @@ function TrendChartComponent({ data, weeklyTargetKg }: TrendChartProps) {
       {!hasData ? (
         <p className="mt-4 text-sm text-stone-500 dark:text-stone-400">
           Log activities over a few days and your weekly footprint will chart
-          here — watch the line trend toward the target.
+          here. Watch the line trend toward the target.
         </p>
       ) : (
         <>

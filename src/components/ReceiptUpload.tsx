@@ -61,7 +61,7 @@ export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
     }
     if (file.size > MAX_BYTES) {
       setStatus("error");
-      setMessage("That image is larger than 6 MB — try a smaller photo.");
+      setMessage("That image is larger than 6 MB. Try a smaller photo.");
       return;
     }
 
@@ -183,7 +183,7 @@ export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
       {status === "ready" && items.length > 0 && (
         <div className="mt-4">
           <p className="text-sm font-medium text-stone-700 dark:text-stone-200">
-            {sourceLabel ? `${sourceLabel} — ` : ""}
+            {sourceLabel ? `${sourceLabel} · ` : ""}
             {items.length} item{items.length === 1 ? "" : "s"} found (
             {totalKg.toFixed(1)} kg CO₂e)
           </p>

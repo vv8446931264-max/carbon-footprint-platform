@@ -148,7 +148,7 @@ export function BaselineEstimator({
           </div>
         ) : (
           <p className="text-sm text-stone-500 dark:text-stone-400">
-            {answered} of {BASELINE_QUESTIONS.length} answered — pick one from
+            {answered} of {BASELINE_QUESTIONS.length} answered. Pick one from
             each to see your estimate.
           </p>
         )}

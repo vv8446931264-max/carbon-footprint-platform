@@ -1,4 +1,5 @@
 import { Code2, Leaf, ShieldCheck, Trophy } from "lucide-react";
+import { ThemeToggle } from "./ThemeToggle";
 
 interface AppHeaderProps {
   achievementsUnlocked: number;
@@ -34,7 +35,7 @@ export function AppHeader({
         <div className="flex items-center gap-2">
           <span
             className="hidden items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300 sm:inline-flex"
-            title="Your data is stored only in this browser — nothing is sent to a server except the text/image you choose to analyse."
+            title="Your data is stored only in this browser. Nothing is sent to a server except the text or image you choose to analyse."
           >
             <ShieldCheck className="h-3.5 w-3.5" aria-hidden="true" />
             Private by design
@@ -51,11 +52,13 @@ export function AppHeader({
             <span className="sr-only">achievements unlocked</span>
           </span>
 
+          <ThemeToggle />
+
           <a
             href="https://github.com/vv8446931264-max/carbon-footprint-platform"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex h-8 w-8 items-center justify-center rounded-full text-stone-500 transition hover:bg-stone-100 hover:text-stone-900 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-stone-500 transition hover:bg-stone-100 hover:text-stone-900 focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-stone-400 dark:hover:bg-stone-800 dark:hover:text-stone-100"
             aria-label="View source on GitHub"
           >
             <Code2 className="h-4 w-4" aria-hidden="true" />

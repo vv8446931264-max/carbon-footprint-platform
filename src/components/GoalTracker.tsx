@@ -113,7 +113,7 @@ export function GoalTracker({
           <div>
             <p className="text-sm text-stone-700 dark:text-stone-200">
               {isOverBudget
-                ? "Over today's budget — tomorrow's a fresh start."
+                ? "Over today's budget. Tomorrow is a fresh start."
                 : "Within today's budget. Nice pace!"}
             </p>
             <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-400">

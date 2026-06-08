@@ -51,7 +51,7 @@ function CategoryBreakdownComponent({ totals }: CategoryBreakdownProps) {
 
       {totals.length === 0 ? (
         <p className="mt-4 text-sm text-stone-500 dark:text-stone-400">
-          No activities logged yet — add one above to see your breakdown.
+          No activities logged yet. Add one above to see your breakdown.
         </p>
       ) : (
         <>

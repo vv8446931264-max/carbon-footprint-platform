@@ -1,8 +1,16 @@
 @import "tailwindcss";
 
 /*
- * Design tokens. A small, deliberate palette — a single brand green paired with
- * a warm "stone" neutral — gives the app a considered, branded feel rather than
+ * Drive Tailwind's `dark:` variant from a `.dark` class on <html> (toggled by
+ * the no-flash script in layout.tsx and the ThemeToggle) instead of the OS
+ * media query, so people can override the theme manually. "system" mode simply
+ * mirrors the OS setting onto that class.
+ */
+@custom-variant dark (&:where(.dark, .dark *));
+
+/*
+ * Design tokens. A small, deliberate palette: a single brand green paired with
+ * a warm "stone" neutral gives the app a considered, branded feel rather than
  * the default flat white-and-gray look.
  */
 :root {
@@ -19,13 +27,11 @@
   --font-mono: var(--font-geist-mono);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0c0a09; /* stone-950 */
-    --foreground: #f5f5f4; /* stone-100 */
-    --brand: #34d399; /* emerald-400 */
-    --brand-strong: #6ee7b7; /* emerald-300 */
-  }
+.dark {
+  --background: #0c0a09; /* stone-950 */
+  --foreground: #f5f5f4; /* stone-100 */
+  --brand: #34d399; /* emerald-400 */
+  --brand-strong: #6ee7b7; /* emerald-300 */
 }
 
 html {

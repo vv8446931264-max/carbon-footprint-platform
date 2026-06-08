@@ -19,8 +19,8 @@ export function SiteFooter() {
         <p className="max-w-2xl">
           Emission factors are published averages (DEFRA / EPA-style) and the ~2
           t CO₂e/year goal reflects a science-based, Paris-aligned per-capita
-          target. Figures are directional estimates, not an audited inventory —
-          see <em>“How we calculate this”</em> above.
+          target. Figures are directional estimates, not an audited inventory.
+          See <em>“How we calculate this”</em> above.
         </p>
 
         <p className="flex items-center gap-1.5">
