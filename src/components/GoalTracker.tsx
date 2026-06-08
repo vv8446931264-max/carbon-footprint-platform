@@ -1,6 +1,7 @@
 "use client";
 
 import { useId, useState } from "react";
+import { Flame, Gauge } from "lucide-react";
 import type { Achievement } from "@/lib/gamification/streaks";
 
 interface GoalTrackerProps {
@@ -43,12 +44,16 @@ export function GoalTracker({
   return (
     <section
       aria-labelledby="goal-heading"
-      className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900"
     >
       <h2
         id="goal-heading"
-        className="text-sm font-medium text-zinc-500 dark:text-zinc-400"
+        className="flex items-center gap-2 text-sm font-medium text-stone-500 dark:text-stone-400"
       >
+        <Gauge
+          className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
+          aria-hidden="true"
+        />
         Daily carbon budget
       </h2>
 
@@ -69,7 +74,7 @@ export function GoalTracker({
               r="40"
               fill="none"
               strokeWidth="8"
-              className="stroke-zinc-200 dark:stroke-zinc-800"
+              className="stroke-stone-200 dark:stroke-stone-800"
             />
             <circle
               cx="48"
@@ -91,7 +96,7 @@ export function GoalTracker({
               x="48"
               y="44"
               textAnchor="middle"
-              className="fill-zinc-900 text-[15px] font-semibold dark:fill-zinc-50"
+              className="fill-stone-900 text-[15px] font-semibold dark:fill-stone-50"
             >
               {todayKg.toFixed(1)}
             </text>
@@ -99,20 +104,20 @@ export function GoalTracker({
               x="48"
               y="60"
               textAnchor="middle"
-              className="fill-zinc-500 text-[10px] dark:fill-zinc-400"
+              className="fill-stone-500 text-[10px] dark:fill-stone-400"
             >
               of {dailyBudgetKg.toFixed(1)} kg
             </text>
           </svg>
 
           <div>
-            <p className="text-sm text-zinc-700 dark:text-zinc-200">
+            <p className="text-sm text-stone-700 dark:text-stone-200">
               {isOverBudget
                 ? "Over today's budget — tomorrow's a fresh start."
                 : "Within today's budget. Nice pace!"}
             </p>
             <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-400">
-              <span aria-hidden="true">🔥</span>
+              <Flame className="h-4 w-4" aria-hidden="true" />
               {streak} day streak
             </p>
           </div>
@@ -122,7 +127,7 @@ export function GoalTracker({
           <div className="flex flex-col gap-1">
             <label
               htmlFor={inputId}
-              className="text-xs font-medium text-zinc-600 dark:text-zinc-300"
+              className="text-xs font-medium text-stone-600 dark:text-stone-300"
             >
               Set daily budget (kg CO₂e)
             </label>
@@ -133,12 +138,12 @@ export function GoalTracker({
               step="0.1"
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              className="w-28 rounded-lg border border-zinc-300 bg-white px-2 py-1.5 text-sm text-zinc-900 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-100"
+              className="w-28 rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-900 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
             />
           </div>
           <button
             type="submit"
-            className="rounded-lg bg-zinc-900 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-zinc-700 focus-visible:ring-2 focus-visible:ring-emerald-500 dark:bg-emerald-600 dark:hover:bg-emerald-700"
+            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
             Save
           </button>
@@ -154,7 +159,7 @@ export function GoalTracker({
             <li
               key={achievement.id}
               title={achievement.description}
-              className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-200"
+              className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-200"
             >
               <span aria-hidden="true">{achievement.icon}</span>
               {achievement.title}

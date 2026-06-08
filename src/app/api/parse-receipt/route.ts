@@ -4,6 +4,7 @@ import { parseReceiptImage, ReceiptParseError } from "@/lib/ai/receiptParser";
 import { calculateEmissionsKgCo2e } from "@/lib/emissions/calculate";
 import { estimateCostUsd } from "@/lib/emissions/cost";
 import { enforceRateLimit, limiters } from "@/lib/security/apiLimiter";
+import { isValidImageSignature } from "@/lib/security/imageSignature";
 
 // ~8M base64 chars ≈ a 6 MB image — generous for a phone photo, but bounded so
 // a malicious client can't push huge payloads into the vision model.
@@ -40,6 +41,21 @@ export async function POST(request: Request) {
         error: "Invalid image upload.",
         details: parsedRequest.error.flatten(),
       },
+      { status: 400 },
+    );
+  }
+
+  // Verify the bytes actually match the claimed image type before spending a
+  // (costly) vision call on them — blocks garbage payloads dressed up with an
+  // image MIME type.
+  if (
+    !isValidImageSignature(
+      parsedRequest.data.imageBase64,
+      parsedRequest.data.mimeType,
+    )
+  ) {
+    return NextResponse.json(
+      { error: "That file doesn't look like a valid image." },
       { status: 400 },
     );
   }

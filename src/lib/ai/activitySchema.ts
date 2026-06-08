@@ -1,43 +1,20 @@
 import { z } from "zod";
-import type { ActivityCategory } from "@/types/activity";
+import {
+  ACTIVITY_CATEGORIES,
+  ENERGY_SOURCES,
+  FOOD_TYPES,
+  TRANSPORT_MODES,
+  WASTE_TYPES,
+  type ActivityCategory,
+} from "@/types/activity";
 
 /**
- * Single source of truth for the AI-output contract. Both the natural-language
- * parser and the receipt/bill interpreter validate against this before any
- * model-produced value is trusted by the emissions calculator or the UI.
+ * The Zod side of the AI-output contract. The category/mode/etc. vocabularies
+ * are imported from `types/activity` (the single source of truth), so the
+ * runtime schema and the compile-time types can never drift. Both the
+ * natural-language parser and the receipt interpreter validate against this
+ * before any model-produced value is trusted by the calculator or the UI.
  */
-
-export const TRANSPORT_MODES = [
-  "car_petrol",
-  "car_diesel",
-  "car_electric",
-  "bus",
-  "train",
-  "flight_short",
-  "flight_long",
-  "bike",
-  "walk",
-] as const;
-
-export const ENERGY_SOURCES = [
-  "grid_electricity",
-  "natural_gas",
-  "lpg",
-  "renewable",
-] as const;
-
-export const FOOD_TYPES = [
-  "beef",
-  "lamb",
-  "pork",
-  "chicken",
-  "fish",
-  "dairy",
-  "vegetables",
-  "grains",
-] as const;
-
-export const WASTE_TYPES = ["landfill", "recycled", "composted"] as const;
 
 /**
  * Discriminated-union schema mirroring `Activity`. Validating the model's
@@ -73,13 +50,9 @@ export const activitySchema = z.discriminatedUnion("category", [
   }),
 ]);
 
-export const categoryEnum = z.enum([
-  "transport",
-  "energy",
-  "food",
-  "shopping",
-  "waste",
-] as [ActivityCategory, ...ActivityCategory[]]);
+export const categoryEnum = z.enum(
+  ACTIVITY_CATEGORIES as unknown as [ActivityCategory, ...ActivityCategory[]],
+);
 
 /** Human-readable list of the category-specific shapes, for prompt building. */
 export const ACTIVITY_SHAPES_PROMPT = `- transport: { "category": "transport", "mode": one of [${TRANSPORT_MODES.join(

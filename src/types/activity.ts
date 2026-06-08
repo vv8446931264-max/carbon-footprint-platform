@@ -1,36 +1,54 @@
-export type ActivityCategory =
-  | "transport"
-  | "energy"
-  | "food"
-  | "shopping"
-  | "waste";
+/**
+ * Single source of truth for activity vocabularies. The runtime `as const`
+ * arrays and the compile-time union types are derived from the *same*
+ * declaration, so they can never drift — adding a value in one place updates
+ * both the TypeScript type and the Zod schema (which imports these arrays).
+ */
 
-export type TransportMode =
-  | "car_petrol"
-  | "car_diesel"
-  | "car_electric"
-  | "bus"
-  | "train"
-  | "flight_short"
-  | "flight_long"
-  | "bike"
-  | "walk";
+export const ACTIVITY_CATEGORIES = [
+  "transport",
+  "energy",
+  "food",
+  "shopping",
+  "waste",
+] as const;
+export type ActivityCategory = (typeof ACTIVITY_CATEGORIES)[number];
 
-export type EnergySource =
-  | "grid_electricity"
-  | "natural_gas"
-  | "lpg"
-  | "renewable";
+export const TRANSPORT_MODES = [
+  "car_petrol",
+  "car_diesel",
+  "car_electric",
+  "bus",
+  "train",
+  "flight_short",
+  "flight_long",
+  "bike",
+  "walk",
+] as const;
+export type TransportMode = (typeof TRANSPORT_MODES)[number];
 
-export type FoodType =
-  | "beef"
-  | "lamb"
-  | "pork"
-  | "chicken"
-  | "fish"
-  | "dairy"
-  | "vegetables"
-  | "grains";
+export const ENERGY_SOURCES = [
+  "grid_electricity",
+  "natural_gas",
+  "lpg",
+  "renewable",
+] as const;
+export type EnergySource = (typeof ENERGY_SOURCES)[number];
+
+export const FOOD_TYPES = [
+  "beef",
+  "lamb",
+  "pork",
+  "chicken",
+  "fish",
+  "dairy",
+  "vegetables",
+  "grains",
+] as const;
+export type FoodType = (typeof FOOD_TYPES)[number];
+
+export const WASTE_TYPES = ["landfill", "recycled", "composted"] as const;
+export type WasteType = (typeof WASTE_TYPES)[number];
 
 export interface TransportActivity {
   category: "transport";
@@ -58,7 +76,7 @@ export interface ShoppingActivity {
 
 export interface WasteActivity {
   category: "waste";
-  wasteType: "landfill" | "recycled" | "composted";
+  wasteType: WasteType;
   weightKg: number;
 }
 

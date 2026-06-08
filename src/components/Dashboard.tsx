@@ -17,25 +17,30 @@ import {
 } from "@/lib/gamification/streaks";
 import { appendEntry, loadLog, saveLog } from "@/lib/storage/footprintLog";
 import { loadDailyBudget, saveDailyBudget } from "@/lib/storage/goal";
+import { CATEGORY_LABELS } from "@/lib/ui/categories";
 import { ActivityLogger } from "./ActivityLogger";
 import { ActivityList } from "./ActivityList";
+import { AppHeader } from "./AppHeader";
 import { CategoryBreakdown } from "./CategoryBreakdown";
 import { CoachPanel } from "./CoachPanel";
 import { FootprintSummary } from "./FootprintSummary";
 import { GoalTracker } from "./GoalTracker";
 import { ImpactCardShare } from "./ImpactCardShare";
+import { Methodology } from "./Methodology";
 import { ReceiptUpload } from "./ReceiptUpload";
+import { SiteFooter } from "./SiteFooter";
+import { Toast } from "./Toast";
 
 const PERIOD_DAYS = 30;
 
-const CATEGORY_LABELS: Record<LoggedActivity["activity"]["category"], string> =
-  {
-    transport: "Transport",
-    energy: "Energy",
-    food: "Food",
-    shopping: "Shopping",
-    waste: "Waste",
-  };
+interface ToastState {
+  message: string;
+  /** IDs added by the action this toast represents, so Undo can remove them. */
+  undoIds: string[];
+}
+
+const cardClass =
+  "rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900";
 
 /**
  * Top-level client component that owns the activity log + goal state and
@@ -51,6 +56,7 @@ export function Dashboard() {
   const [dailyBudgetKg, setDailyBudgetKg] = useState<number>(() =>
     loadDailyBudget(),
   );
+  const [toast, setToast] = useState<ToastState | null>(null);
 
   useEffect(() => {
     saveLog(entries);
@@ -62,12 +68,29 @@ export function Dashboard() {
 
   function handleLog(entry: LoggedActivity) {
     setEntries((current) => appendEntry(current, entry));
+    setToast({
+      message: `Logged “${truncate(entry.description)}”`,
+      undoIds: [entry.id],
+    });
   }
 
   function handleLogMany(newEntries: LoggedActivity[]) {
     setEntries((current) =>
       newEntries.reduce((acc, entry) => appendEntry(acc, entry), current),
     );
+    setToast({
+      message: `Added ${newEntries.length} ${
+        newEntries.length === 1 ? "activity" : "activities"
+      } from your receipt`,
+      undoIds: newEntries.map((entry) => entry.id),
+    });
+  }
+
+  function handleUndo() {
+    if (!toast) return;
+    const ids = new Set(toast.undoIds);
+    setEntries((current) => current.filter((entry) => !ids.has(entry.id)));
+    setToast(null);
   }
 
   const recentEntries = entriesWithinDays(entries, PERIOD_DAYS);
@@ -99,74 +122,92 @@ export function Dashboard() {
     : null;
 
   return (
-    <div className="flex w-full max-w-4xl flex-col gap-6 px-4 py-10 sm:px-8">
-      <header>
-        <h1 className="text-2xl font-bold text-zinc-900 dark:text-zinc-50">
-          Carbon Footprint Coach
-        </h1>
-        <p className="mt-1 text-sm text-zinc-600 dark:text-zinc-400">
-          Log everyday activities in plain language and get a personalized
-          picture of your impact.
-        </p>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
-          {achievements.length} / {allAchievements().length} achievements
-          unlocked
-        </p>
-      </header>
-
-      <section
-        aria-labelledby="logger-heading"
-        className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
-      >
-        <h2 id="logger-heading" className="sr-only">
-          Log a new activity
-        </h2>
-        <ActivityLogger onLog={handleLog} />
-      </section>
-
-      <ReceiptUpload onLogMany={handleLogMany} />
-
-      <GoalTracker
-        dailyBudgetKg={dailyBudgetKg}
-        onChangeBudget={setDailyBudgetKg}
-        todayKg={todayKg}
-        streak={streak}
-        achievements={achievements}
+    <>
+      <AppHeader
+        achievementsUnlocked={achievements.length}
+        achievementsTotal={allAchievements().length}
       />
 
-      <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+      <div className="flex w-full max-w-4xl flex-col gap-6 px-4 py-8 sm:px-8">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
+            Your carbon dashboard
+          </h1>
+          <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+            Log everyday activities in plain language — or scan a receipt — and
+            see a clear, personalized picture of your impact.
+          </p>
+        </div>
+
         <FootprintSummary
           totalKgCo2e={total}
           periodDays={PERIOD_DAYS}
           totalCostUsd={totalCostUsd}
         />
+
+        <section aria-labelledby="logger-heading" className={cardClass}>
+          <h2 id="logger-heading" className="sr-only">
+            Log a new activity
+          </h2>
+          <ActivityLogger onLog={handleLog} />
+        </section>
+
+        <ReceiptUpload onLogMany={handleLogMany} />
+
+        <GoalTracker
+          dailyBudgetKg={dailyBudgetKg}
+          onChangeBudget={setDailyBudgetKg}
+          todayKg={todayKg}
+          streak={streak}
+          achievements={achievements}
+        />
+
+        <CategoryBreakdown totals={categoryTotals} />
+
         <CoachPanel
           totalKgCo2e={total}
           periodDays={PERIOD_DAYS}
           topCategories={categoryTotals.slice(0, 5)}
         />
+
+        <Methodology />
+
+        <ImpactCardShare
+          data={{
+            totalKgCo2e: total,
+            periodDays: PERIOD_DAYS,
+            streak,
+            topCategoryLabel,
+          }}
+        />
+
+        <section
+          aria-labelledby="recent-heading"
+          className="flex flex-col gap-3"
+        >
+          <h2
+            id="recent-heading"
+            className="text-sm font-medium text-stone-500 dark:text-stone-400"
+          >
+            Recent activity
+          </h2>
+          <ActivityList entries={recentEntries.slice(0, 20)} />
+        </section>
       </div>
 
-      <CategoryBreakdown totals={categoryTotals} />
+      <SiteFooter />
 
-      <ImpactCardShare
-        data={{
-          totalKgCo2e: total,
-          periodDays: PERIOD_DAYS,
-          streak,
-          topCategoryLabel,
-        }}
-      />
-
-      <section aria-labelledby="recent-heading" className="flex flex-col gap-3">
-        <h2
-          id="recent-heading"
-          className="text-sm font-medium text-zinc-500 dark:text-zinc-400"
-        >
-          Recent activity
-        </h2>
-        <ActivityList entries={recentEntries.slice(0, 20)} />
-      </section>
-    </div>
+      {toast && (
+        <Toast
+          message={toast.message}
+          onUndo={handleUndo}
+          onDismiss={() => setToast(null)}
+        />
+      )}
+    </>
   );
+}
+
+function truncate(text: string, max = 40): string {
+  return text.length > max ? `${text.slice(0, max - 1)}…` : text;
 }

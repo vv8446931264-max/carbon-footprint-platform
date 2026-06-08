@@ -1,7 +1,9 @@
 "use client";
 
 import { useId, useRef, useState } from "react";
+import { Camera, ScanLine } from "lucide-react";
 import type { Activity, LoggedActivity } from "@/types/activity";
+import { CATEGORY_VISUALS } from "@/lib/ui/categories";
 
 interface ReceiptItem {
   description: string;
@@ -22,14 +24,6 @@ interface ReceiptUploadProps {
 
 const ALLOWED = ["image/jpeg", "image/png", "image/webp"];
 const MAX_BYTES = 6 * 1024 * 1024;
-
-const CATEGORY_ICON: Record<Activity["category"], string> = {
-  transport: "🚗",
-  energy: "⚡",
-  food: "🍽️",
-  shopping: "🛍️",
-  waste: "🗑️",
-};
 
 /**
  * Bill / receipt interpreter (multimodal). A person snaps a photo of a grocery
@@ -137,15 +131,19 @@ export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
   return (
     <section
       aria-labelledby="receipt-heading"
-      className="rounded-2xl border border-zinc-200 bg-white p-6 shadow-sm dark:border-zinc-800 dark:bg-zinc-900"
+      className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900"
     >
       <h2
         id="receipt-heading"
-        className="text-sm font-medium text-zinc-500 dark:text-zinc-400"
+        className="flex items-center gap-2 text-sm font-medium text-stone-500 dark:text-stone-400"
       >
+        <ScanLine
+          className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
+          aria-hidden="true"
+        />
         Scan a receipt or bill
       </h2>
-      <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
+      <p className="mt-2 text-sm text-stone-600 dark:text-stone-300">
         Upload a photo of a grocery receipt, fuel slip, or utility bill and AI
         will extract the activities for you.
       </p>
@@ -153,9 +151,9 @@ export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
       <div className="mt-4">
         <label
           htmlFor={inputId}
-          className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-zinc-300 bg-white px-3 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-within:ring-2 focus-within:ring-emerald-500 dark:border-zinc-700 dark:bg-zinc-900 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 focus-within:ring-2 focus-within:ring-emerald-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
         >
-          <span aria-hidden="true">📷</span>
+          <Camera className="h-4 w-4" aria-hidden="true" />
           {status === "loading" || status === "reading"
             ? "Reading image…"
             : "Choose image"}
@@ -173,7 +171,7 @@ export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
 
       <div role="status" aria-live="polite" className="mt-3">
         {status === "loading" && (
-          <p className="text-sm text-zinc-500 dark:text-zinc-400">
+          <p className="text-sm text-stone-500 dark:text-stone-400">
             Extracting activities from your image…
           </p>
         )}
@@ -184,33 +182,38 @@ export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
 
       {status === "ready" && items.length > 0 && (
         <div className="mt-4">
-          <p className="text-sm font-medium text-zinc-700 dark:text-zinc-200">
+          <p className="text-sm font-medium text-stone-700 dark:text-stone-200">
             {sourceLabel ? `${sourceLabel} — ` : ""}
             {items.length} item{items.length === 1 ? "" : "s"} found (
             {totalKg.toFixed(1)} kg CO₂e)
           </p>
           <ul className="mt-3 flex flex-col gap-2">
-            {items.map((item, index) => (
-              <li
-                key={index}
-                className="flex items-start justify-between gap-3 rounded-xl border border-zinc-200 p-3 text-sm dark:border-zinc-800"
-              >
-                <span className="flex items-start gap-2">
-                  <span aria-hidden="true">
-                    {CATEGORY_ICON[item.activity.category]}
-                  </span>
-                  <span className="text-zinc-800 dark:text-zinc-100">
-                    {item.description}
-                    <span className="ml-1 text-xs text-zinc-400">
-                      ({item.confidence} confidence)
+            {items.map((item, index) => {
+              const { Icon, chip } = CATEGORY_VISUALS[item.activity.category];
+              return (
+                <li
+                  key={index}
+                  className="flex items-start justify-between gap-3 rounded-xl border border-stone-200 p-3 text-sm dark:border-stone-800"
+                >
+                  <span className="flex min-w-0 items-start gap-2.5">
+                    <span
+                      className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-md ${chip}`}
+                    >
+                      <Icon className="h-4 w-4" aria-hidden="true" />
+                    </span>
+                    <span className="min-w-0 text-stone-800 dark:text-stone-100">
+                      {item.description}
+                      <span className="ml-1.5 text-xs text-stone-400">
+                        ({item.confidence} confidence)
+                      </span>
                     </span>
                   </span>
-                </span>
-                <span className="whitespace-nowrap font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                  {item.emissionsKgCo2e.toFixed(2)} kg
-                </span>
-              </li>
-            ))}
+                  <span className="whitespace-nowrap font-semibold tabular-nums text-stone-900 dark:text-stone-100">
+                    {item.emissionsKgCo2e.toFixed(2)} kg
+                  </span>
+                </li>
+              );
+            })}
           </ul>
           <div className="mt-4 flex gap-2">
             <button
@@ -224,7 +227,7 @@ export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
             <button
               type="button"
               onClick={reset}
-              className="rounded-lg border border-zinc-300 px-4 py-2 text-sm font-semibold text-zinc-700 transition hover:bg-zinc-50 focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-zinc-700 dark:text-zinc-200 dark:hover:bg-zinc-800"
+              className="rounded-lg border border-stone-300 px-4 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
             >
               Discard
             </button>
