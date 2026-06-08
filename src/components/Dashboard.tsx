@@ -188,6 +188,12 @@ export function Dashboard() {
   const showEstimator = baseline === null || retaking;
   const hasSavedEstimate = baseline !== null && baseline.annualTonnes > 0;
 
+  // Progressive disclosure: until there's at least one logged activity, the
+  // trend/coach/share cards have nothing to show, so we hide them rather than
+  // greet a new user with a wall of empty panels. They appear the moment the
+  // first activity is logged.
+  const hasEntries = entries.length > 0;
+
   return (
     <>
       <AppHeader
@@ -267,27 +273,36 @@ export function Dashboard() {
           <CategoryBreakdown totals={categoryTotals} />
         </div>
 
-        <TrendChart data={trend} weeklyTargetKg={WEEKLY_TARGET_KG} />
+        {hasEntries && (
+          <TrendChart data={trend} weeklyTargetKg={WEEKLY_TARGET_KG} />
+        )}
 
-        <CoachPanel
-          totalKgCo2e={total}
-          periodDays={PERIOD_DAYS}
-          topCategories={categoryTotals.slice(0, 5)}
-        />
-
-        {/* Trust + share, side by side. */}
-        <div className={gridRow}>
-          <Methodology />
-
-          <ImpactCardShare
-            data={{
-              totalKgCo2e: total,
-              periodDays: PERIOD_DAYS,
-              streak,
-              topCategoryLabel,
-            }}
+        {hasEntries && (
+          <CoachPanel
+            totalKgCo2e={total}
+            periodDays={PERIOD_DAYS}
+            topCategories={categoryTotals.slice(0, 5)}
           />
-        </div>
+        )}
+
+        {/* Trust + share. Share has nothing to summarise until something's
+            logged, so it joins Methodology only once there are entries. */}
+        {hasEntries ? (
+          <div className={gridRow}>
+            <Methodology />
+
+            <ImpactCardShare
+              data={{
+                totalKgCo2e: total,
+                periodDays: PERIOD_DAYS,
+                streak,
+                topCategoryLabel,
+              }}
+            />
+          </div>
+        ) : (
+          <Methodology />
+        )}
 
         <section
           aria-labelledby="recent-heading"
