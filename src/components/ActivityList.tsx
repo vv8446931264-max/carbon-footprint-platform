@@ -1,5 +1,6 @@
 import type { LoggedActivity } from "@/types/activity";
 import { suggestSwap } from "@/lib/emissions/compare";
+import { estimateCostUsd } from "@/lib/emissions/cost";
 
 interface ActivityListProps {
   entries: LoggedActivity[];
@@ -31,6 +32,7 @@ export function ActivityList({ entries }: ActivityListProps) {
     <ul className="flex flex-col gap-3">
       {entries.map((entry) => {
         const swap = suggestSwap(entry.activity);
+        const costUsd = estimateCostUsd(entry.activity);
         return (
           <li
             key={entry.id}
@@ -53,8 +55,15 @@ export function ActivityList({ entries }: ActivityListProps) {
                   </time>
                 </div>
               </div>
-              <span className="whitespace-nowrap text-sm font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
-                {entry.emissionsKgCo2e.toFixed(2)} kg CO₂e
+              <span className="flex flex-col items-end whitespace-nowrap text-right">
+                <span className="text-sm font-semibold tabular-nums text-emerald-700 dark:text-emerald-400">
+                  {entry.emissionsKgCo2e.toFixed(2)} kg CO₂e
+                </span>
+                {costUsd > 0 && (
+                  <span className="text-xs tabular-nums text-zinc-400 dark:text-zinc-500">
+                    ≈ ${costUsd.toFixed(2)}
+                  </span>
+                )}
               </span>
             </div>
 
@@ -64,7 +73,14 @@ export function ActivityList({ entries }: ActivityListProps) {
                 <strong>
                   {swap.savingsKgCo2e.toFixed(2)} kg CO₂e (
                   {swap.savingsPercent.toFixed(0)}%)
-                </strong>{" "}
+                </strong>
+                {swap.costSavingUsd > 0 && (
+                  <>
+                    {" "}
+                    and roughly{" "}
+                    <strong>${swap.costSavingUsd.toFixed(2)}</strong>
+                  </>
+                )}{" "}
                 on this trip.
               </p>
             )}

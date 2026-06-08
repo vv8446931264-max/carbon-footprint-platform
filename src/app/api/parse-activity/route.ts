@@ -5,12 +5,16 @@ import {
   parseActivityFromText,
 } from "@/lib/ai/activityParser";
 import { calculateEmissionsKgCo2e } from "@/lib/emissions/calculate";
+import { enforceRateLimit, limiters } from "@/lib/security/apiLimiter";
 
 const requestSchema = z.object({
   text: z.string().min(1).max(500),
 });
 
 export async function POST(request: Request) {
+  const limited = enforceRateLimit(request, limiters.text);
+  if (limited) return limited;
+
   let body: unknown;
   try {
     body = await request.json();

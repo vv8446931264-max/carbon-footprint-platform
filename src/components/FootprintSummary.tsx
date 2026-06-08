@@ -6,16 +6,20 @@ import {
 interface FootprintSummaryProps {
   totalKgCo2e: number;
   periodDays: number;
+  /** Estimated out-of-pocket cost of the logged activities (USD). */
+  totalCostUsd?: number;
 }
 
 /**
  * Headline number plus a plain-language comparison against the global
  * per-capita average — gives people an intuitive sense of scale rather
- * than a bare kilogram figure.
+ * than a bare kilogram figure. Also surfaces the estimated dollar cost so
+ * carbon and money are always shown side by side.
  */
 export function FootprintSummary({
   totalKgCo2e,
   periodDays,
+  totalCostUsd,
 }: FootprintSummaryProps) {
   const dailyAverageGlobal = tonnesToKg(GLOBAL_AVERAGE_ANNUAL_TONNES) / 365;
   const expectedForPeriod = dailyAverageGlobal * periodDays;
@@ -48,6 +52,11 @@ export function FootprintSummary({
         <span className="text-lg text-zinc-500 dark:text-zinc-400">
           kg CO₂e
         </span>
+        {totalCostUsd !== undefined && totalCostUsd > 0 && (
+          <span className="ml-auto text-sm font-medium tabular-nums text-zinc-500 dark:text-zinc-400">
+            ≈ ${totalCostUsd.toFixed(2)}
+          </span>
+        )}
       </p>
       <p className="mt-2 text-sm text-zinc-600 dark:text-zinc-300">
         {comparisonText}

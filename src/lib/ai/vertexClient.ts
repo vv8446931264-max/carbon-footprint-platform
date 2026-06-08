@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { createTtlCache } from "./cache";
 
 /**
  * Lazily-constructed singleton so the client is created at most once
@@ -31,14 +32,34 @@ function getClient(): GoogleGenAI {
 const MODEL_NAME = process.env.GCP_GEMINI_MODEL ?? "gemini-2.5-flash";
 
 /**
- * Sends a prompt to Gemini via Vertex AI and returns the raw text response.
- * Centralizing this call makes it easy to add caching, retries, or logging
- * in one place rather than scattering `generateContent` calls across routes.
+ * Memoizes identical text prompts so we never pay Vertex AI latency/credits
+ * twice for the same input (e.g. a user re-logging an identical activity).
+ * 30-minute TTL, capped at 500 entries with LRU eviction.
+ */
+const responseCache = createTtlCache<string>({
+  maxEntries: 500,
+  ttlMs: 30 * 60 * 1000,
+});
+
+/**
+ * Sends a text prompt to Gemini via Vertex AI and returns the raw text
+ * response. Results are cached by (model + system + prompt); pass
+ * `{ cache: false }` to force a fresh call (e.g. self-correcting retries,
+ * where the prompt already differs anyway).
  */
 export async function generateText(
   prompt: string,
   systemInstruction?: string,
+  options: { cache?: boolean } = {},
 ): Promise<string> {
+  const useCache = options.cache !== false;
+  const cacheKey = `${MODEL_NAME} ${systemInstruction ?? ""} ${prompt}`;
+
+  if (useCache) {
+    const hit = responseCache.get(cacheKey);
+    if (hit !== undefined) return hit;
+  }
+
   const client = getClient();
 
   const response = await client.models.generateContent({
@@ -61,6 +82,53 @@ export async function generateText(
   const text = response.text;
   if (!text) {
     throw new Error("Vertex AI returned an empty response.");
+  }
+
+  if (useCache) responseCache.set(cacheKey, text);
+  return text;
+}
+
+/**
+ * Multimodal call: sends an image (base64, no data-URL prefix) plus a text
+ * prompt to Gemini. Powers the bill/receipt interpreter. Not cached — image
+ * payloads make poor cache keys and are rarely re-submitted identically.
+ */
+export async function generateFromImage(
+  imageBase64: string,
+  mimeType: string,
+  prompt: string,
+  systemInstruction?: string,
+): Promise<string> {
+  const client = getClient();
+
+  const response = await client.models.generateContent({
+    model: MODEL_NAME,
+    contents: [
+      {
+        role: "user",
+        parts: [
+          { inlineData: { mimeType, data: imageBase64 } },
+          { text: prompt },
+        ],
+      },
+    ],
+    config: {
+      temperature: 0.1,
+      maxOutputTokens: 2048,
+      ...(systemInstruction
+        ? {
+            systemInstruction: {
+              role: "system",
+              parts: [{ text: systemInstruction }],
+            },
+          }
+        : {}),
+    },
+  });
+
+  const text = response.text;
+  if (!text) {
+    throw new Error("Vertex AI returned an empty response for the image.");
   }
 
   return text;

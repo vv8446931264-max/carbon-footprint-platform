@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { CoachReportError, generateCoachReport } from "@/lib/ai/coach";
+import { enforceRateLimit, limiters } from "@/lib/security/apiLimiter";
 
 const requestSchema = z.object({
   totalKgCo2e: z.number().nonnegative().max(10_000_000),
@@ -16,6 +17,9 @@ const requestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const limited = enforceRateLimit(request, limiters.text);
+  if (limited) return limited;
+
   let body: unknown;
   try {
     body = await request.json();

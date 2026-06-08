@@ -1,5 +1,6 @@
 import type { Activity, TransportActivity } from "@/types/activity";
 import { calculateEmissionsKgCo2e } from "./calculate";
+import { estimateCostUsd } from "./cost";
 
 export interface SwapSuggestion {
   label: string;
@@ -7,6 +8,8 @@ export interface SwapSuggestion {
   alternativeKgCo2e: number;
   savingsKgCo2e: number;
   savingsPercent: number;
+  /** Positive when the greener alternative is also cheaper (USD). */
+  costSavingUsd: number;
 }
 
 const TRANSPORT_ALTERNATIVES: Partial<
@@ -19,7 +22,9 @@ const TRANSPORT_ALTERNATIVES: Partial<
 
 /**
  * Suggests a lower-carbon alternative for an activity, when one exists,
- * and quantifies the saving. Pure function — easy to test and extend.
+ * and quantifies both the carbon AND the money saved. Pure function — easy
+ * to test and extend. Surfacing the dollar saving alongside the kilograms
+ * is what turns a guilt-free "nudge" into a genuinely persuasive one.
  */
 export function suggestSwap(activity: Activity): SwapSuggestion | null {
   if (activity.category !== "transport") return null;
@@ -27,15 +32,20 @@ export function suggestSwap(activity: Activity): SwapSuggestion | null {
   const alternativeMode = TRANSPORT_ALTERNATIVES[activity.mode];
   if (!alternativeMode) return null;
 
-  const original = calculateEmissionsKgCo2e(activity);
-  const alternative = calculateEmissionsKgCo2e({
+  const alternativeActivity: TransportActivity = {
     category: "transport",
     mode: alternativeMode,
     distanceKm: activity.distanceKm,
-  });
+  };
+
+  const original = calculateEmissionsKgCo2e(activity);
+  const alternative = calculateEmissionsKgCo2e(alternativeActivity);
 
   const savings = original - alternative;
   if (savings <= 0) return null;
+
+  const costSaving =
+    estimateCostUsd(activity) - estimateCostUsd(alternativeActivity);
 
   return {
     label: `Swap ${describeMode(activity.mode)} for ${describeMode(alternativeMode)}`,
@@ -43,6 +53,7 @@ export function suggestSwap(activity: Activity): SwapSuggestion | null {
     alternativeKgCo2e: alternative,
     savingsKgCo2e: round(savings),
     savingsPercent: round((savings / original) * 100),
+    costSavingUsd: round(costSaving),
   };
 }
 

@@ -22,5 +22,46 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-geist-sans), Arial, Helvetica, sans-serif;
+}
+
+/*
+ * Skip-to-content link: visually hidden until focused, then pinned to the
+ * top-left so keyboard users can jump straight past the header to the main
+ * content. A core WCAG 2.4.1 (Bypass Blocks) affordance.
+ */
+.skip-link {
+  position: absolute;
+  left: 0.5rem;
+  top: -3rem;
+  z-index: 50;
+  border-radius: 0.5rem;
+  background: #059669;
+  padding: 0.5rem 0.75rem;
+  color: #ffffff;
+  font-size: 0.875rem;
+  font-weight: 600;
+  transition: top 0.15s ease-in-out;
+}
+
+.skip-link:focus {
+  top: 0.5rem;
+  outline: 2px solid #ffffff;
+  outline-offset: 2px;
+}
+
+/*
+ * Respect users who prefer reduced motion: neutralise animations/transitions
+ * (e.g. the progress ring, skip-link slide) for anyone with vestibular
+ * sensitivities. WCAG 2.3.3 (Animation from Interactions).
+ */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
 }

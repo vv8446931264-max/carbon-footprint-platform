@@ -8,6 +8,7 @@ import {
   totalsByCategory,
 } from "@/lib/emissions/aggregate";
 import { suggestSwap } from "@/lib/emissions/compare";
+import { estimateCostUsd } from "@/lib/emissions/cost";
 import {
   allAchievements,
   currentStreak,
@@ -23,6 +24,7 @@ import { CoachPanel } from "./CoachPanel";
 import { FootprintSummary } from "./FootprintSummary";
 import { GoalTracker } from "./GoalTracker";
 import { ImpactCardShare } from "./ImpactCardShare";
+import { ReceiptUpload } from "./ReceiptUpload";
 
 const PERIOD_DAYS = 30;
 
@@ -62,8 +64,21 @@ export function Dashboard() {
     setEntries((current) => appendEntry(current, entry));
   }
 
+  function handleLogMany(newEntries: LoggedActivity[]) {
+    setEntries((current) =>
+      newEntries.reduce((acc, entry) => appendEntry(acc, entry), current),
+    );
+  }
+
   const recentEntries = entriesWithinDays(entries, PERIOD_DAYS);
   const total = totalEmissions(recentEntries);
+  const totalCostUsd =
+    Math.round(
+      recentEntries.reduce(
+        (sum, entry) => sum + estimateCostUsd(entry.activity),
+        0,
+      ) * 100,
+    ) / 100;
   const categoryTotals = totalsByCategory(recentEntries);
 
   const todayKey = new Date().toISOString().slice(0, 10);
@@ -109,6 +124,8 @@ export function Dashboard() {
         <ActivityLogger onLog={handleLog} />
       </section>
 
+      <ReceiptUpload onLogMany={handleLogMany} />
+
       <GoalTracker
         dailyBudgetKg={dailyBudgetKg}
         onChangeBudget={setDailyBudgetKg}
@@ -118,7 +135,11 @@ export function Dashboard() {
       />
 
       <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
-        <FootprintSummary totalKgCo2e={total} periodDays={PERIOD_DAYS} />
+        <FootprintSummary
+          totalKgCo2e={total}
+          periodDays={PERIOD_DAYS}
+          totalCostUsd={totalCostUsd}
+        />
         <CoachPanel
           totalKgCo2e={total}
           periodDays={PERIOD_DAYS}
