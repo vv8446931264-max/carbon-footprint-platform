@@ -27,6 +27,11 @@ import {
   type StoredBaseline,
 } from "@/lib/storage/baseline";
 import { loadDailyBudget, saveDailyBudget } from "@/lib/storage/goal";
+import {
+  annualBreakdownFromBaseline,
+  annualBreakdownFromEntries,
+  hasModelledFootprint,
+} from "@/lib/simulator/reductionSimulator";
 import { CATEGORY_LABELS } from "@/lib/ui/categories";
 import { ActivityLogger } from "./ActivityLogger";
 import { ActivityList } from "./ActivityList";
@@ -39,6 +44,7 @@ import { GoalTracker } from "./GoalTracker";
 import { ImpactCardShare } from "./ImpactCardShare";
 import { Methodology } from "./Methodology";
 import { ReceiptUpload } from "./ReceiptUpload";
+import { ReductionSimulator } from "./ReductionSimulator";
 import { SiteFooter } from "./SiteFooter";
 import { TrendChart } from "./TrendChart";
 import { Toast } from "./Toast";
@@ -206,6 +212,14 @@ export function Dashboard() {
   // first activity is logged.
   const hasEntries = entries.length > 0;
 
+  // Feed the what-if simulator from logged activity when we have it, otherwise
+  // from the baseline estimate, so it's usable the moment onboarding is done.
+  const simulatorBreakdown = hasEntries
+    ? annualBreakdownFromEntries(categoryTotals, PERIOD_DAYS)
+    : baseline && baseline.annualTonnes > 0
+      ? annualBreakdownFromBaseline(baseline.answers)
+      : null;
+
   return (
     <>
       <AppHeader
@@ -284,6 +298,13 @@ export function Dashboard() {
 
           <CategoryBreakdown totals={categoryTotals} />
         </div>
+
+        {simulatorBreakdown && hasModelledFootprint(simulatorBreakdown) && (
+          <ReductionSimulator
+            breakdown={simulatorBreakdown}
+            source={hasEntries ? "logged" : "estimate"}
+          />
+        )}
 
         {hasEntries && (
           <TrendChart data={trend} weeklyTargetKg={WEEKLY_TARGET_KG} />
