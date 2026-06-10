@@ -12,6 +12,7 @@ import { PARIS_ALIGNED_DAILY_KG } from "@/lib/emissions/calculate";
 import { suggestSwap } from "@/lib/emissions/compare";
 import { estimateCostUsd } from "@/lib/emissions/cost";
 import { weeklyTrend } from "@/lib/emissions/trend";
+import { localDayKey } from "@/lib/dates/localDay";
 import {
   allAchievements,
   currentStreak,
@@ -185,7 +186,7 @@ export function Dashboard() {
   const categoryTotals = totalsByCategory(recentEntries);
   const trend = weeklyTrend(entries, TREND_WEEKS);
 
-  const todayKey = new Date().toISOString().slice(0, 10);
+  const todayKey = localDayKey(new Date());
   const todayKg =
     dailyTotals(entries).find((d) => d.date === todayKey)?.kgCo2e ?? 0;
   const streak = currentStreak(entries, dailyBudgetKg);

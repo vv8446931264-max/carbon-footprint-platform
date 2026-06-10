@@ -1,5 +1,4 @@
 import { z } from "zod";
-import type { Activity } from "@/types/activity";
 import type { ParsedActivityResult } from "@/types/ai";
 import {
   ACTIVITY_SHAPES_PROMPT,
@@ -104,7 +103,7 @@ async function attemptParse(
   return {
     ok: true,
     value: {
-      activity: parsed.data.activity as Activity,
+      activity: parsed.data.activity,
       description: parsed.data.description,
       confidence: parsed.data.confidence,
     },

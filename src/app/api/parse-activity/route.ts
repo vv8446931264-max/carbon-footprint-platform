@@ -4,6 +4,7 @@ import {
   ActivityParseError,
   parseActivityFromText,
 } from "@/lib/ai/activityParser";
+import { readJsonBody } from "@/lib/api/readJsonBody";
 import { calculateEmissionsKgCo2e } from "@/lib/emissions/calculate";
 import { enforceRateLimit, limiters } from "@/lib/security/apiLimiter";
 
@@ -15,26 +16,12 @@ export async function POST(request: Request) {
   const limited = enforceRateLimit(request, limiters.text);
   if (limited) return limited;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { error: "Request body must be valid JSON." },
-      { status: 400 },
-    );
-  }
-
-  const parsedRequest = requestSchema.safeParse(body);
-  if (!parsedRequest.success) {
-    return NextResponse.json(
-      { error: "Invalid request.", details: parsedRequest.error.flatten() },
-      { status: 400 },
-    );
-  }
+  // Size-capped, JSON-parsed, and Zod-validated in one shared guard.
+  const body = await readJsonBody(request, requestSchema);
+  if (!body.ok) return body.response;
 
   try {
-    const result = await parseActivityFromText(parsedRequest.data.text);
+    const result = await parseActivityFromText(body.data.text);
     const emissionsKgCo2e = calculateEmissionsKgCo2e(result.activity);
 
     return NextResponse.json({

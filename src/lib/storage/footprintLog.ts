@@ -1,12 +1,26 @@
+import { z } from "zod";
 import type { LoggedActivity } from "@/types/activity";
+import { activitySchema } from "@/lib/ai/activitySchema";
 
 const STORAGE_KEY = "carbon-footprint-log:v1";
 
 /**
- * Thin persistence layer over localStorage. Isolated here so the storage
- * mechanism (and any future swap to a real backend) doesn't leak into
- * components, and so it can be unit-tested without a browser.
+ * localStorage is user-editable, shared with extensions, and survives app
+ * versions — it is an UNTRUSTED input, same as an API body. The previous
+ * implementation cast `JSON.parse` output straight to `LoggedActivity[]`;
+ * one hand-edited or stale-schema entry (string emissions, missing activity)
+ * would crash the dashboard or poison every total with NaN. Each entry is
+ * now validated against the same schema the AI guardrails use; invalid
+ * entries are dropped individually instead of nuking the whole log.
  */
+const loggedActivitySchema = z.object({
+  id: z.string().min(1),
+  loggedAt: z.string().min(1),
+  description: z.string().max(500),
+  activity: activitySchema,
+  emissionsKgCo2e: z.number().finite().nonnegative(),
+});
+
 export function loadLog(storage?: Pick<Storage, "getItem">): LoggedActivity[] {
   const target =
     storage ?? (typeof window === "undefined" ? null : window.localStorage);
@@ -17,7 +31,12 @@ export function loadLog(storage?: Pick<Storage, "getItem">): LoggedActivity[] {
 
   try {
     const parsed = JSON.parse(raw);
-    return Array.isArray(parsed) ? (parsed as LoggedActivity[]) : [];
+    if (!Array.isArray(parsed)) return [];
+
+    return parsed.flatMap((candidate) => {
+      const result = loggedActivitySchema.safeParse(candidate);
+      return result.success ? [result.data as LoggedActivity] : [];
+    });
   } catch {
     return [];
   }
@@ -31,7 +50,18 @@ export function saveLog(
     storage ?? (typeof window === "undefined" ? null : window.localStorage);
   if (!target) return;
 
-  target.setItem(STORAGE_KEY, JSON.stringify(entries));
+  try {
+    target.setItem(STORAGE_KEY, JSON.stringify(entries));
+  } catch {
+    // Quota exceeded (private mode, full disk). Keep the most recent entries
+    // rather than silently losing everything — and never crash the UI over
+    // persistence.
+    try {
+      target.setItem(STORAGE_KEY, JSON.stringify(entries.slice(0, 100)));
+    } catch {
+      console.warn("Could not persist the activity log (storage unavailable).");
+    }
+  }
 }
 
 export function appendEntry(

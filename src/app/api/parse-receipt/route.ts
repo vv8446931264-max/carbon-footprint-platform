@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { parseReceiptImage, ReceiptParseError } from "@/lib/ai/receiptParser";
+import { readJsonBody } from "@/lib/api/readJsonBody";
 import { calculateEmissionsKgCo2e } from "@/lib/emissions/calculate";
 import { estimateCostUsd } from "@/lib/emissions/cost";
 import { enforceRateLimit, limiters } from "@/lib/security/apiLimiter";
@@ -9,6 +10,11 @@ import { isValidImageSignature } from "@/lib/security/imageSignature";
 // ~8M base64 chars ≈ a 6 MB image — generous for a phone photo, but bounded so
 // a malicious client can't push huge payloads into the vision model.
 const MAX_BASE64_LENGTH = 8_000_000;
+
+// The JSON envelope around the base64 payload adds a little overhead; cap the
+// raw body just above the largest legal payload so oversized uploads are
+// refused before they are buffered or parsed.
+const MAX_BODY_BYTES = 8_500_000;
 
 const ALLOWED_MIME_TYPES = ["image/jpeg", "image/png", "image/webp"] as const;
 
@@ -24,36 +30,17 @@ export async function POST(request: Request) {
   const limited = enforceRateLimit(request, limiters.receipt);
   if (limited) return limited;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { error: "Request body must be valid JSON." },
-      { status: 400 },
-    );
-  }
-
-  const parsedRequest = requestSchema.safeParse(body);
-  if (!parsedRequest.success) {
-    return NextResponse.json(
-      {
-        error: "Invalid image upload.",
-        details: parsedRequest.error.flatten(),
-      },
-      { status: 400 },
-    );
-  }
+  // Size-capped, JSON-parsed, and Zod-validated in one shared guard.
+  const body = await readJsonBody(request, requestSchema, {
+    maxBytes: MAX_BODY_BYTES,
+    invalidMessage: "Invalid image upload.",
+  });
+  if (!body.ok) return body.response;
 
   // Verify the bytes actually match the claimed image type before spending a
   // (costly) vision call on them — blocks garbage payloads dressed up with an
   // image MIME type.
-  if (
-    !isValidImageSignature(
-      parsedRequest.data.imageBase64,
-      parsedRequest.data.mimeType,
-    )
-  ) {
+  if (!isValidImageSignature(body.data.imageBase64, body.data.mimeType)) {
     return NextResponse.json(
       { error: "That file doesn't look like a valid image." },
       { status: 400 },
@@ -62,8 +49,8 @@ export async function POST(request: Request) {
 
   try {
     const { sourceLabel, items } = await parseReceiptImage(
-      parsedRequest.data.imageBase64,
-      parsedRequest.data.mimeType,
+      body.data.imageBase64,
+      body.data.mimeType,
     );
 
     // Compute emissions + cost server-side so the client never has to trust

@@ -25,6 +25,12 @@ export class CoachReportError extends Error {
   constructor(
     message: string,
     readonly cause?: unknown,
+    /**
+     * Safe to show directly to end users (no internal details). Mirrors the
+     * `userMessage` contract on ActivityParseError / ReceiptParseError so
+     * every AI route maps errors to the client the same way.
+     */
+    readonly userMessage: string = "We couldn't generate your coach report just now. Please try again in a moment.",
   ) {
     super(message);
     this.name = "CoachReportError";
@@ -42,6 +48,8 @@ export async function generateCoachReport(
   if (input.totalKgCo2e < 0 || input.periodDays <= 0) {
     throw new CoachReportError(
       "Invalid report input: totals and period must be positive.",
+      undefined,
+      "We couldn't generate a report from that data. Log an activity first, then try again.",
     );
   }
 
@@ -60,7 +68,11 @@ Write the JSON report now.`;
   try {
     rawText = await generateText(prompt, SYSTEM_INSTRUCTION);
   } catch (error) {
-    throw new CoachReportError("Failed to reach the AI service.", error);
+    throw new CoachReportError(
+      "Failed to reach the AI service.",
+      error,
+      "We couldn't reach the AI service just now. Please try again in a moment.",
+    );
   }
 
   let json: unknown;

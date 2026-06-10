@@ -1,7 +1,8 @@
 import type { LoggedActivity } from "@/types/activity";
+import { localDayKey } from "@/lib/dates/localDay";
 
 export interface DailyTotal {
-  /** ISO date string, e.g. "2026-06-08" */
+  /** Local calendar date string, e.g. "2026-06-08" */
   date: string;
   kgCo2e: number;
 }
@@ -14,14 +15,15 @@ export interface Achievement {
 }
 
 /**
- * Groups logged activities into per-day totals (local calendar days),
- * sorted oldest → newest. Pure aggregation — no I/O, fully testable.
+ * Groups logged activities into per-day totals (LOCAL calendar days — see
+ * lib/dates/localDay.ts for why the UTC slice was wrong), sorted oldest →
+ * newest. Pure aggregation — no I/O, fully testable.
  */
 export function dailyTotals(entries: LoggedActivity[]): DailyTotal[] {
   const totals = new Map<string, number>();
 
   for (const entry of entries) {
-    const date = toDateKey(entry.loggedAt);
+    const date = localDayKey(entry.loggedAt);
     totals.set(date, (totals.get(date) ?? 0) + entry.emissionsKgCo2e);
   }
 
@@ -49,12 +51,12 @@ export function currentStreak(
 
   // If today has no entries yet, start counting from yesterday so logging
   // hasn't happened yet today doesn't immediately zero the streak.
-  if (!totals.has(toDateKey(cursor.toISOString()))) {
+  if (!totals.has(localDayKey(cursor))) {
     cursor.setDate(cursor.getDate() - 1);
   }
 
   while (true) {
-    const key = toDateKey(cursor.toISOString());
+    const key = localDayKey(cursor);
     const total = totals.get(key);
     if (total === undefined || total > dailyBudgetKg) break;
 
@@ -130,10 +132,6 @@ export function allAchievements(): Achievement[] {
     description,
     icon,
   }));
-}
-
-function toDateKey(isoString: string): string {
-  return isoString.slice(0, 10);
 }
 
 function round(value: number): number {

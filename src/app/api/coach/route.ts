@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { CoachReportError, generateCoachReport } from "@/lib/ai/coach";
+import { readJsonBody } from "@/lib/api/readJsonBody";
 import { enforceRateLimit, limiters } from "@/lib/security/apiLimiter";
 
 const requestSchema = z.object({
@@ -20,30 +21,20 @@ export async function POST(request: Request) {
   const limited = enforceRateLimit(request, limiters.text);
   if (limited) return limited;
 
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { error: "Request body must be valid JSON." },
-      { status: 400 },
-    );
-  }
-
-  const parsedRequest = requestSchema.safeParse(body);
-  if (!parsedRequest.success) {
-    return NextResponse.json(
-      { error: "Invalid request.", details: parsedRequest.error.flatten() },
-      { status: 400 },
-    );
-  }
+  // Size-capped, JSON-parsed, and Zod-validated in one shared guard.
+  const body = await readJsonBody(request, requestSchema);
+  if (!body.ok) return body.response;
 
   try {
-    const report = await generateCoachReport(parsedRequest.data);
+    const report = await generateCoachReport(body.data);
     return NextResponse.json(report);
   } catch (error) {
     if (error instanceof CoachReportError) {
-      return NextResponse.json({ error: error.message }, { status: 422 });
+      // Same contract as the other AI routes: internal reason (with cause)
+      // goes to the server log; only the pre-vetted, user-safe message is
+      // sent to the client.
+      console.warn("Coach report guardrail:", error.message, error.cause);
+      return NextResponse.json({ error: error.userMessage }, { status: 422 });
     }
 
     console.error("Unexpected error generating coach report:", error);

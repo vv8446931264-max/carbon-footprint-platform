@@ -3,6 +3,7 @@
 import { useId, useRef, useState } from "react";
 import { Camera, ScanLine } from "lucide-react";
 import type { Activity, LoggedActivity } from "@/types/activity";
+import { prepareImageForUpload } from "@/lib/images/prepareImageForUpload";
 import { CATEGORY_VISUALS } from "@/lib/ui/categories";
 
 interface ReceiptItem {
@@ -29,8 +30,9 @@ const MAX_BYTES = 6 * 1024 * 1024;
  * Bill / receipt interpreter (multimodal). A person snaps a photo of a grocery
  * receipt or utility bill; Gemini Vision extracts the carbon-relevant line
  * items, which are previewed (with per-item confidence) and added to the log in
- * one tap. The image is read client-side to base64 and sent to a rate-limited,
- * size-capped API route — it is never stored.
+ * one tap. The image is downscaled client-side (a 4 MB phone photo becomes a
+ * few hundred KB with no loss the vision model cares about), then sent to a
+ * rate-limited, size-capped API route — it is never stored.
  */
 export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
   const [status, setStatus] = useState<
@@ -41,6 +43,8 @@ export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
   const [message, setMessage] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const inputId = useId();
+
+  const busy = status === "loading" || status === "reading";
 
   function reset() {
     setItems([]);
@@ -68,9 +72,11 @@ export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
     setStatus("reading");
     setMessage(null);
 
-    let base64: string;
+    // Downscale + re-encode in the browser so we never ship a multi-megabyte
+    // original over the wire (or into the vision model's token budget).
+    let prepared: Awaited<ReturnType<typeof prepareImageForUpload>>;
     try {
-      base64 = await readAsBase64(file);
+      prepared = await prepareImageForUpload(file);
     } catch {
       setStatus("error");
       setMessage("Couldn't read that file. Please try another image.");
@@ -82,7 +88,10 @@ export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
       const response = await fetch("/api/parse-receipt", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ imageBase64: base64, mimeType: file.type }),
+        body: JSON.stringify({
+          imageBase64: prepared.base64,
+          mimeType: prepared.mimeType,
+        }),
       });
       const data = (await response.json()) as
         | ReceiptResponse
@@ -131,6 +140,7 @@ export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
   return (
     <section
       aria-labelledby="receipt-heading"
+      aria-busy={busy}
       className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900"
     >
       <h2
@@ -154,9 +164,7 @@ export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
           className="inline-flex cursor-pointer items-center gap-2 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm font-semibold text-stone-700 transition hover:bg-stone-50 focus-within:ring-2 focus-within:ring-emerald-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200 dark:hover:bg-stone-800"
         >
           <Camera className="h-4 w-4" aria-hidden="true" />
-          {status === "loading" || status === "reading"
-            ? "Reading image…"
-            : "Choose image"}
+          {busy ? "Reading image…" : "Choose image"}
         </label>
         <input
           ref={inputRef}
@@ -164,7 +172,7 @@ export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
           type="file"
           accept="image/jpeg,image/png,image/webp"
           onChange={handleFile}
-          disabled={status === "loading" || status === "reading"}
+          disabled={busy}
           className="sr-only"
         />
       </div>
@@ -192,7 +200,7 @@ export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
               const { Icon, chip } = CATEGORY_VISUALS[item.activity.category];
               return (
                 <li
-                  key={index}
+                  key={`${index}-${item.description}`}
                   className="flex items-start justify-between gap-3 rounded-xl border border-stone-200 p-3 text-sm dark:border-stone-800"
                 >
                   <span className="flex min-w-0 items-start gap-2.5">
@@ -203,7 +211,7 @@ export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
                     </span>
                     <span className="min-w-0 text-stone-800 dark:text-stone-100">
                       {item.description}
-                      <span className="ml-1.5 text-xs text-stone-400">
+                      <span className="ml-1.5 text-xs text-stone-500 dark:text-stone-400">
                         ({item.confidence} confidence)
                       </span>
                     </span>
@@ -236,22 +244,4 @@ export function ReceiptUpload({ onLogMany }: ReceiptUploadProps) {
       )}
     </section>
   );
-}
-
-function readAsBase64(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onerror = () => reject(reader.error);
-    reader.onload = () => {
-      const result = reader.result;
-      if (typeof result !== "string") {
-        reject(new Error("Unexpected file read result."));
-        return;
-      }
-      // Strip the "data:<mime>;base64," prefix — the API wants raw base64.
-      const comma = result.indexOf(",");
-      resolve(comma >= 0 ? result.slice(comma + 1) : result);
-    };
-    reader.readAsDataURL(file);
-  });
 }

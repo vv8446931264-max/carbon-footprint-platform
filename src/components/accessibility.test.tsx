@@ -3,8 +3,10 @@ import { axe, toHaveNoViolations } from "jest-axe";
 import { describe, expect, it } from "vitest";
 import type { LoggedActivity } from "@/types/activity";
 import { ActivityList } from "./ActivityList";
+import { ActivityLogger } from "./ActivityLogger";
 import { CategoryBreakdown } from "./CategoryBreakdown";
 import { FootprintSummary } from "./FootprintSummary";
+import { ReceiptUpload } from "./ReceiptUpload";
 
 expect.extend(toHaveNoViolations);
 
@@ -29,6 +31,10 @@ const sampleEntries: LoggedActivity[] = [
  * Automated WCAG checks with axe-core. These catch a meaningful class of
  * regressions (missing labels, bad contrast, invalid ARIA) on every CI run,
  * complementing the manual semantic-HTML/ARIA work in the components.
+ *
+ * Coverage deliberately includes the *interactive* components (form, file
+ * upload), not just the read-only ones — that's where label/role regressions
+ * actually happen.
  */
 describe("accessibility (axe)", () => {
   it("FootprintSummary has no detectable violations", async () => {
@@ -52,6 +58,16 @@ describe("accessibility (axe)", () => {
         ]}
       />,
     );
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("ActivityLogger (interactive form) has no detectable violations", async () => {
+    const { container } = render(<ActivityLogger onLog={() => {}} />);
+    expect(await axe(container)).toHaveNoViolations();
+  });
+
+  it("ReceiptUpload (file input) has no detectable violations", async () => {
+    const { container } = render(<ReceiptUpload onLogMany={() => {}} />);
     expect(await axe(container)).toHaveNoViolations();
   });
 });
