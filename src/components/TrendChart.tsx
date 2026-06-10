@@ -1,6 +1,9 @@
 "use client";
 
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
+
+// Module-level constant so the string isn't duplicated across the component.
+const REDUCED_MOTION_QUERY = "(prefers-reduced-motion: reduce)";
 import { TrendingDown } from "lucide-react";
 import {
   Area,
@@ -28,6 +31,21 @@ interface TrendChartProps {
  */
 function TrendChartComponent({ data, weeklyTargetKg }: TrendChartProps) {
   const hasData = data.some((d) => d.kgCo2e > 0);
+  // Lazy initializer reads the OS preference synchronously so Recharts uses the
+  // correct value on the very first render, with no effect-driven cascade.
+  const [reducedMotion, setReducedMotion] = useState(() =>
+    typeof window !== "undefined"
+      ? window.matchMedia(REDUCED_MOTION_QUERY).matches
+      : false,
+  );
+
+  useEffect(() => {
+    const media = window.matchMedia(REDUCED_MOTION_QUERY);
+    const listener = (event: MediaQueryListEvent) =>
+      setReducedMotion(event.matches);
+    media.addEventListener("change", listener);
+    return () => media.removeEventListener("change", listener);
+  }, []);
 
   const chartData = data.map((d) => ({
     label: formatWeek(d.weekStart),
@@ -107,6 +125,7 @@ function TrendChartComponent({ data, weeklyTargetKg }: TrendChartProps) {
                   fill="url(#trendFill)"
                   dot={{ r: 3, fill: "#059669" }}
                   activeDot={{ r: 5 }}
+                  isAnimationActive={!reducedMotion}
                 />
               </AreaChart>
             </ResponsiveContainer>

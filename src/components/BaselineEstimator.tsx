@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Compass, X } from "lucide-react";
 import {
   BASELINE_QUESTIONS,
@@ -31,6 +31,7 @@ export function BaselineEstimator({
   onSkip,
 }: BaselineEstimatorProps) {
   const [answers, setAnswers] = useState<BaselineAnswers>({});
+  const headingId = useId();
 
   const complete = isComplete(answers);
   const tonnes = estimateAnnualTonnes(answers);
@@ -56,7 +57,7 @@ export function BaselineEstimator({
 
   return (
     <section
-      aria-labelledby="baseline-heading"
+      aria-labelledby={headingId}
       className="relative overflow-hidden rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50/80 to-white p-6 shadow-sm dark:border-emerald-900/50 dark:from-emerald-950/30 dark:to-stone-900"
     >
       <button
@@ -69,7 +70,7 @@ export function BaselineEstimator({
       </button>
 
       <h2
-        id="baseline-heading"
+        id={headingId}
         className="flex items-center gap-2 text-base font-semibold text-stone-900 dark:text-stone-50"
       >
         <Compass

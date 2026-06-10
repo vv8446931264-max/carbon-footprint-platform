@@ -141,11 +141,11 @@ export function annualBreakdownFromEntries(
   periodDays: number,
 ): AnnualBreakdown {
   const factor = periodDays > 0 ? 365 / periodDays : 0;
-  const byCategory = new Map(
+  const byCategory = new Map<string, number>(
     categoryTotals.map((entry) => [entry.category, entry.kgCo2e]),
   );
   const get = (category: string) =>
-    (byCategory.get(category as never) ?? 0) * factor;
+    (byCategory.get(category) ?? 0) * factor;
   return {
     transportKg: get("transport"),
     foodKg: get("food"),

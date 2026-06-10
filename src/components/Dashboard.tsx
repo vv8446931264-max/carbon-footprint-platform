@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Compass, Download, Trash2 } from "lucide-react";
 import type { LoggedActivity } from "@/types/activity";
 import {
@@ -151,7 +151,7 @@ export function Dashboard() {
     link.href = url;
     link.download = `carbon-coach-data-${new Date().toISOString().slice(0, 10)}.json`;
     link.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 15_000);
   }
 
   function handleUndo() {
@@ -174,34 +174,58 @@ export function Dashboard() {
     setRetaking(false);
   }
 
-  const recentEntries = entriesWithinDays(entries, PERIOD_DAYS);
-  const total = totalEmissions(recentEntries);
-  const totalCostUsd =
-    Math.round(
-      recentEntries.reduce(
-        (sum, entry) => sum + estimateCostUsd(entry.activity),
-        0,
-      ) * 100,
-    ) / 100;
-  const categoryTotals = totalsByCategory(recentEntries);
-  const trend = weeklyTrend(entries, TREND_WEEKS);
-
-  const todayKey = localDayKey(new Date());
-  const todayKg =
-    dailyTotals(entries).find((d) => d.date === todayKey)?.kgCo2e ?? 0;
-  const streak = currentStreak(entries, dailyBudgetKg);
-  const hasSwappableEntry = entries.some(
-    (entry) => suggestSwap(entry.activity) !== null,
-  );
-  const achievements = unlockedAchievements({
-    entryCount: entries.length,
+  const {
+    recentEntries,
+    total,
+    totalCostUsd,
+    categoryTotals,
+    trend,
+    todayKg,
     streak,
-    hasSwappableEntry,
-  });
+    achievements,
+    topCategoryLabel,
+  } = useMemo(() => {
+    const recent = entriesWithinDays(entries, PERIOD_DAYS);
+    const sum = totalEmissions(recent);
+    const cost =
+      Math.round(
+        recent.reduce(
+          (acc, entry) => acc + estimateCostUsd(entry.activity),
+          0,
+        ) * 100,
+      ) / 100;
+    const categories = totalsByCategory(recent);
+    const weeklyData = weeklyTrend(entries, TREND_WEEKS);
 
-  const topCategoryLabel = categoryTotals[0]
-    ? CATEGORY_LABELS[categoryTotals[0].category]
-    : null;
+    const todayKey = localDayKey(new Date());
+    const dayTotal =
+      dailyTotals(entries).find((d) => d.date === todayKey)?.kgCo2e ?? 0;
+    const currentStreakVal = currentStreak(entries, dailyBudgetKg);
+    const swappable = entries.some(
+      (entry) => suggestSwap(entry.activity) !== null,
+    );
+    const unlocked = unlockedAchievements({
+      entryCount: entries.length,
+      streak: currentStreakVal,
+      hasSwappableEntry: swappable,
+    });
+
+    const topLabel = categories[0]
+      ? CATEGORY_LABELS[categories[0].category]
+      : null;
+
+    return {
+      recentEntries: recent,
+      total: sum,
+      totalCostUsd: cost,
+      categoryTotals: categories,
+      trend: weeklyData,
+      todayKg: dayTotal,
+      streak: currentStreakVal,
+      achievements: unlocked,
+      topCategoryLabel: topLabel,
+    };
+  }, [entries, dailyBudgetKg]);
 
   // Show the estimator on first visit (no stored baseline) or when re-taking.
   const showEstimator = baseline === null || retaking;

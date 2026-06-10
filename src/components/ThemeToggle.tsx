@@ -44,11 +44,17 @@ function subscribe(onChange: () => void) {
     applyPreference(readPreference());
     onChange();
   };
-  window.addEventListener("storage", onChange);
+  const onStorage = (event: StorageEvent) => {
+    if (event.key === THEME_STORAGE_KEY) {
+      applyPreference(readPreference());
+      onChange();
+    }
+  };
+  window.addEventListener("storage", onStorage);
   media.addEventListener("change", onMedia);
   return () => {
     listeners.delete(onChange);
-    window.removeEventListener("storage", onChange);
+    window.removeEventListener("storage", onStorage);
     media.removeEventListener("change", onMedia);
   };
 }
