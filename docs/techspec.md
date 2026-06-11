@@ -258,7 +258,7 @@ Returns the detected MIME type (not the claimed one), or `null` if no match. The
 
 ### 5.3. Rate Limiting
 
-Fixed-window per-client limiter in `rateLimit.ts`. Client key is extracted defensively from `X-Forwarded-For` (first non-private IP) or `x-real-ip`.
+Fixed-window per-client limiter in `rateLimit.ts`. Client key is extracted from `X-Forwarded-For` (first hop) or `x-real-ip`.
 
 | Route | Limit |
 | --- | --- |
@@ -266,7 +266,18 @@ Fixed-window per-client limiter in `rateLimit.ts`. Client key is extracted defen
 | `/api/coach` | 20 req / 60 s |
 | `/api/parse-receipt` | 6 req / 60 s |
 
-> **Known limitation**: rate limiting is in-memory and therefore per-Cloud-Run-instance. Under autoscaling, a determined caller could bypass limits by spinning up new instances. A Redis/Memorystore swap is the upgrade path — the interface is designed to be stateless for exactly this reason.
+> **⚠️ Critical known limitation**: This limiter is **in-memory and per-Cloud-Run-instance**. Under autoscaling it provides no real protection:
+> - Each new instance starts with a fresh counter.
+> - `X-Forwarded-For` is attacker-controlled and spoofable — rate-limiting the wrong IP.
+> - Fixed-window allows burst attacks (20 req at :59 + 20 at :00 = 40/s through the limiter).
+>
+> **Current role**: Protecting against accidental client loops and casual abuse only.
+>
+> **Production upgrade path (in order of impact)**:
+> 1. **Cloud Armor** — global edge rate limiting before requests reach instances (highest impact, no code change).
+> 2. **Redis-backed sliding-window limiter** — Upstash or Cloud Memorystore; the `RateLimiter` interface is designed for this swap.
+> 3. **Use trusted IP header** — `X-Cloud-Trace-Context` or GCP load balancer's last-hop IP instead of `X-Forwarded-For`.
+> 4. **Token-bucket algorithm** — burst protection.
 
 ### 5.4. AI Output Validation
 
@@ -276,11 +287,23 @@ All model output is treated as untrusted input:
 3. Category mismatch (top-level `category` ≠ nested `activity.category`) triggers a retry or drop.
 4. Typed error classes (`ActivityParseError`, `ReceiptParseError`, `CoachReportError`) carry a `userMessage` that is safe to surface in the UI. Internal details stay in server logs.
 
-### 5.5. HTTP Security Headers (next.config.ts)
+> **⚠️ Gap**: Zod validates **structure**, not **content safety**. AI-generated string fields (`description`, `tips`, `summary`) are stored and rendered without HTML sanitization. The current defence is React's auto-escaping of text nodes — but this is a single layer. A prompt injection attack that induces Gemini to return HTML tags would be rendered as text today, but would execute if any code path ever uses `dangerouslySetInnerHTML` or interpolates the string into an HTML attribute.
+>
+> **Fix**: Add `isomorphic-dompurify` and sanitize AI string fields before storage — see `rules.md` §10.
+
+### 5.5. CORS Policy
+
+No explicit CORS headers are set. Next.js defaults to same-origin-only — no external site can call these API routes from JavaScript. This is the **correct stance** for this application (prevents external sites from consuming Vertex AI quota).
+
+> **⚠️ This is accidental, not intentional.** It is undocumented and fragile. If `Access-Control-Allow-Origin: *` is ever added to fix a cross-origin issue, the protection disappears silently.
+>
+> **Action required**: Add `lib/security/cors.ts` with an explicit origin allowlist (empty for now) so the policy is visible code, not implicit absence. Document the stance. See `rules.md` §12.
+
+### 5.6. HTTP Security Headers (next.config.ts)
 
 | Header | Value |
 | --- | --- |
-| `Content-Security-Policy` | `default-src 'self'; script-src 'self' 'unsafe-inline'; ...` |
+| `Content-Security-Policy` | `default-src 'self'; script-src 'self' 'unsafe-inline'; ...` ⚠️ |
 | `Strict-Transport-Security` | `max-age=63072000; includeSubDomains; preload` |
 | `X-Frame-Options` | `DENY` |
 | `X-Content-Type-Options` | `nosniff` |

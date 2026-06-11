@@ -124,7 +124,66 @@ These rules capture non-obvious decisions that are easy to violate. They exist b
 
 ---
 
-## 10. No Absolute File Paths in Documentation or Code Comments
+## 10. Sanitize AI Output Before Storage — Zod Structure ≠ Safety
+
+**Rule**: After Zod validates the shape of an AI response, run all string fields through a content sanitizer (DOMPurify with `ALLOWED_TAGS: []`) before storing or rendering.
+
+**Why**: Zod validates `description: z.string().max(280)` — any string passes. A prompt injection attack or adversarial receipt could induce Gemini to return `<img src=x onerror=...>` or `<script>` tags. React's auto-escaping protects text nodes, but that's a single line of defence. If the string is ever used in an attribute, a toast library, a filename, or any future `dangerouslySetInnerHTML`, it will execute.
+
+**How to apply**:
+- Add `isomorphic-dompurify` as a production dependency.
+- Apply `DOMPurify.sanitize(val, { ALLOWED_TAGS: [] })` as a `.transform()` in the Zod schemas for `description` and any other AI-generated text field before the value touches localStorage or the component tree.
+- Add a character allowlist regex as a second layer: only alphanumeric, spaces, and common punctuation.
+
+---
+
+## 11. Never Expose Zod Validation Details in Production Responses
+
+**Rule**: Strip `parsed.error.flatten()` from 400 responses when `NODE_ENV !== 'development'`.
+
+**Why**: Zod's flattened error output tells callers the exact field names, expected types, and length limits. This is ideal during development but hands attackers a map to craft minimally-valid payloads that probe edge cases.
+
+**How to apply**:
+```typescript
+return NextResponse.json(
+  {
+    error: options.invalidMessage ?? "Invalid request.",
+    ...(process.env.NODE_ENV === 'development' && {
+      details: parsed.error.flatten(),
+    }),
+  },
+  { status: 400 },
+);
+```
+
+---
+
+## 12. CORS Policy Must Be Explicit, Not Accidental
+
+**Rule**: The absence of CORS headers is a deliberate policy decision (same-origin only). Document it. Never add `Access-Control-Allow-Origin: *` to "fix" a cross-origin call without a security review.
+
+**Why**: The current same-origin stance prevents external sites from burning Vertex AI quota. It is accidentally correct — no one wrote code to enforce it, so no one will notice the day someone removes it. A wildcard CORS header added to unblock a mobile prototype will make all API routes publicly callable from any origin.
+
+**How to apply**:
+- If cross-origin access is ever needed, implement an explicit allowlist in `lib/security/cors.ts` using `process.env.ALLOWED_ORIGINS`.
+- No wildcards. No "just for now". Document the change in a comment with the reason and date.
+
+---
+
+## 13. Add Request IDs to Every API Response and Log Line
+
+**Rule**: Generate a `requestId = crypto.randomUUID()` at the route handler entry point. Include it in every `console.error` / `console.warn` call and in every error response body.
+
+**Why**: Without request IDs, it is impossible to correlate a user's "my receipt upload failed" report with a specific server log entry. With 500+ requests per day, grep alone won't find it.
+
+**How to apply**:
+- Attach `requestId` to error responses: `{ error: "...", requestId }`.
+- Format all log lines as JSON: `console.error(JSON.stringify({ severity: 'ERROR', requestId, endpoint, errorType, message }))`.
+- This makes logs filterable in Cloud Logging by request ID.
+
+---
+
+## 14. No Absolute File Paths in Documentation or Code Comments
 
 **Rule**: Never reference absolute paths (e.g. `C:\Users\Admin\...`) in documentation, comments, or configuration.
 
