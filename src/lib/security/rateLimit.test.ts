@@ -44,11 +44,18 @@ describe("createRateLimiter", () => {
 });
 
 describe("clientKeyFromRequest", () => {
-  it("uses the first hop of x-forwarded-for", () => {
+  it("uses the last hop of x-forwarded-for (appended by the trusted proxy)", () => {
     const req = new Request("https://example.com", {
-      headers: { "x-forwarded-for": "203.0.113.1, 10.0.0.1" },
+      headers: { "x-forwarded-for": "1.2.3.4, 203.0.113.1" },
     });
     expect(clientKeyFromRequest(req)).toBe("203.0.113.1");
+  });
+
+  it("ignores caller-supplied leading entries", () => {
+    const req = new Request("https://example.com", {
+      headers: { "x-forwarded-for": "spoofed, also-spoofed, 198.51.100.7" },
+    });
+    expect(clientKeyFromRequest(req)).toBe("198.51.100.7");
   });
 
   it("falls back to anonymous when no client headers exist", () => {

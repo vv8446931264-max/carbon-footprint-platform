@@ -73,11 +73,16 @@ export function createRateLimiter({ limit, windowMs }: RateLimiterOptions) {
 }
 
 /**
- * Best-effort client identifier from proxy headers. Cloud Run sits behind a
- * Google front-end that sets `x-forwarded-for`; we take the first hop.
+ * Best-effort client identifier from proxy headers. Cloud Run's front-end
+ * *appends* the real client IP to `x-forwarded-for`, so the last entry is the
+ * only one the client can't spoof — earlier entries are caller-supplied and
+ * taking the first would let anyone dodge their per-IP quota with a header.
  */
 export function clientKeyFromRequest(request: Request): string {
   const forwarded = request.headers.get("x-forwarded-for");
-  if (forwarded) return forwarded.split(",")[0]!.trim();
+  if (forwarded) {
+    const hops = forwarded.split(",");
+    return hops[hops.length - 1]!.trim();
+  }
   return request.headers.get("x-real-ip") ?? "anonymous";
 }

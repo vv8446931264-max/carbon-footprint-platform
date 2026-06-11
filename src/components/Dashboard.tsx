@@ -89,6 +89,7 @@ export function Dashboard() {
   const [visibleCount, setVisibleCount] = useState(DEFAULT_VISIBLE);
   const [confettiKey, setConfettiKey] = useState(0);
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
+  const [showLogSheet, setShowLogSheet] = useState(false);
   const loggerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -543,7 +544,18 @@ export function Dashboard() {
         />
       )}
 
-      <FloatingActionButton onClick={scrollToLogger} />
+      <FloatingActionButton onClick={() => setShowLogSheet(true)} />
+
+      {showLogSheet && (
+        <QuickLogSheet onClose={() => setShowLogSheet(false)}>
+          <ActivityLogger
+            onLog={(entry) => {
+              handleLog(entry);
+              setShowLogSheet(false);
+            }}
+          />
+        </QuickLogSheet>
+      )}
 
       {confettiKey > 0 && (
         <Confetti key={confettiKey} />
@@ -585,6 +597,82 @@ function Confetti() {
   );
 }
 
+// ─── Modal behaviour ──────────────────────────────────────────────────────────
+
+/**
+ * Shared dialog plumbing: close on Escape, focus the dialog on open, and
+ * return focus to whatever opened it when it unmounts.
+ */
+function useDialog(onClose: () => void) {
+  const dialogRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const opener = document.activeElement as HTMLElement | null;
+    dialogRef.current?.focus();
+
+    function onKeyDown(event: KeyboardEvent) {
+      if (event.key === "Escape") onClose();
+    }
+    window.addEventListener("keydown", onKeyDown);
+    return () => {
+      window.removeEventListener("keydown", onKeyDown);
+      opener?.focus();
+    };
+  }, [onClose]);
+
+  return dialogRef;
+}
+
+// ─── Quick-log bottom sheet (opened by the mobile FAB) ───────────────────────
+
+function QuickLogSheet({
+  onClose,
+  children,
+}: {
+  onClose: () => void;
+  children: React.ReactNode;
+}) {
+  const dialogRef = useDialog(onClose);
+
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="quick-log-heading"
+      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
+    >
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        className="relative w-full max-w-lg rounded-t-2xl border border-stone-200 bg-white p-6 pb-8 shadow-xl outline-none dark:border-stone-700 dark:bg-stone-900 sm:rounded-2xl sm:pb-6"
+      >
+        <div className="mb-4 flex items-center justify-between">
+          <h2
+            id="quick-log-heading"
+            className="text-sm font-semibold text-stone-900 dark:text-stone-50"
+          >
+            Log an activity
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close"
+            className="rounded-md p-1 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-stone-800 dark:hover:text-stone-200"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+        {children}
+      </div>
+    </div>
+  );
+}
+
 // ─── Keyboard shortcuts modal ─────────────────────────────────────────────────
 
 const SHORTCUTS = [
@@ -595,6 +683,8 @@ const SHORTCUTS = [
 ];
 
 function ShortcutsModal({ onClose }: { onClose: () => void }) {
+  const dialogRef = useDialog(onClose);
+
   return (
     <div
       role="dialog"
@@ -607,7 +697,11 @@ function ShortcutsModal({ onClose }: { onClose: () => void }) {
         onClick={onClose}
         aria-hidden="true"
       />
-      <div className="relative w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-xl dark:border-stone-700 dark:bg-stone-900">
+      <div
+        ref={dialogRef}
+        tabIndex={-1}
+        className="relative w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-xl outline-none dark:border-stone-700 dark:bg-stone-900"
+      >
         <div className="mb-4 flex items-center justify-between">
           <h2
             id="shortcuts-heading"

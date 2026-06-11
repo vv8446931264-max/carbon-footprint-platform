@@ -1,6 +1,6 @@
 "use client";
 
-import { Car, Utensils, Zap, ShoppingBag } from "lucide-react";
+import { Car, Leaf, UtensilsCrossed, Zap, ShoppingBag } from "lucide-react";
 
 interface EmptyStateProps {
   onSelectExample: (text: string) => void;
@@ -13,9 +13,9 @@ const QUICK_ACTIONS = [
     color: "bg-sky-50 text-sky-700 dark:bg-sky-500/10 dark:text-sky-300",
   },
   {
-    Icon: Utensils,
+    Icon: UtensilsCrossed,
     text: "had chicken biryani for lunch",
-    color: "bg-orange-50 text-orange-700 dark:bg-orange-500/10 dark:text-orange-300",
+    color: "bg-rose-50 text-rose-700 dark:bg-rose-500/10 dark:text-rose-300",
   },
   {
     Icon: Zap,
@@ -33,7 +33,7 @@ export function EmptyState({ onSelectExample }: EmptyStateProps) {
   return (
     <div className="flex flex-col items-center gap-6 rounded-2xl border border-dashed border-stone-300 bg-gradient-to-br from-white to-emerald-50/30 px-6 py-12 text-center dark:border-stone-700 dark:from-stone-900 dark:to-emerald-950/10">
       <div className="flex h-14 w-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-500/10">
-        <Utensils className="h-7 w-7 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+        <Leaf className="h-7 w-7 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
       </div>
 
       <div>
