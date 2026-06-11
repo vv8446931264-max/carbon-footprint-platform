@@ -3,6 +3,7 @@ import {
   INDIA_URBAN_AVERAGE_ANNUAL_TONNES,
   PARIS_ALIGNED_ANNUAL_TONNES,
 } from "@/lib/emissions/calculate";
+import { EmissionEquivalencies } from "./EmissionEquivalencies";
 
 interface FootprintSummaryProps {
   totalKgCo2e: number;
@@ -197,6 +198,15 @@ export function FootprintSummary({
           ))}
         <span>{context}</span>
       </p>
+
+      {hasData && (
+        <div className="mt-5">
+          <p className="mb-2 text-xs font-medium text-stone-500 dark:text-stone-400">
+            That&apos;s equivalent to…
+          </p>
+          <EmissionEquivalencies kgCo2e={totalKgCo2e} />
+        </div>
+      )}
     </section>
   );
 }

@@ -1,34 +1,35 @@
-import { Lightbulb, Sprout, Trash2 } from "lucide-react";
+import { Lightbulb, Search, Trash2 } from "lucide-react";
 import type { LoggedActivity } from "@/types/activity";
 import { suggestSwap } from "@/lib/emissions/compare";
 import { estimateCostUsd } from "@/lib/emissions/cost";
 import { CATEGORY_VISUALS } from "@/lib/ui/categories";
+import { EmptyState } from "./EmptyState";
 
 interface ActivityListProps {
   entries: LoggedActivity[];
-  /**
-   * When provided, each entry shows a remove button. Optional so the list can
-   * also be used read-only (and so existing call sites/tests are unaffected).
-   */
   onDelete?: (id: string) => void;
+  /** When provided, empty state shows quick-action chips that fill this text. */
+  onSelectExample?: (text: string) => void;
+  /** Non-empty means a search filter is active and returned no results. */
+  isFiltered?: boolean;
 }
 
-/**
- * Recent-activity feed. Each entry that has a lower-carbon alternative shows an
- * inline "swap" suggestion with a quantified carbon AND cash saving — the
- * what-if simulator surfaced contextually rather than as a separate page.
- */
-export function ActivityList({ entries, onDelete }: ActivityListProps) {
+export function ActivityList({ entries, onDelete, onSelectExample, isFiltered }: ActivityListProps) {
   if (entries.length === 0) {
+    if (isFiltered) {
+      return (
+        <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-stone-300 bg-white/50 px-6 py-10 text-center dark:border-stone-700 dark:bg-stone-900/40">
+          <Search className="h-8 w-8 text-stone-300 dark:text-stone-600" aria-hidden="true" />
+          <p className="text-sm text-stone-500 dark:text-stone-400">No activities match your search.</p>
+        </div>
+      );
+    }
+    if (onSelectExample) {
+      return <EmptyState onSelectExample={onSelectExample} />;
+    }
     return (
       <div className="flex flex-col items-center gap-3 rounded-2xl border border-dashed border-stone-300 bg-white/50 px-6 py-10 text-center dark:border-stone-700 dark:bg-stone-900/40">
-        <span className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-50 text-emerald-600 dark:bg-emerald-500/10 dark:text-emerald-400">
-          <Sprout className="h-5 w-5" aria-hidden="true" />
-        </span>
-        <p className="text-sm text-stone-500 dark:text-stone-400">
-          Nothing logged yet. Describe an activity or scan a receipt above to
-          get started.
-        </p>
+        <p className="text-sm text-stone-500 dark:text-stone-400">Nothing logged yet.</p>
       </div>
     );
   }

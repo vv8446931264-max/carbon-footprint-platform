@@ -1,12 +1,21 @@
 "use client";
 
-import { useId, useState } from "react";
-import { Loader2, Sparkles } from "lucide-react";
+import { useEffect, useId, useState } from "react";
+import { Leaf, Sparkles } from "lucide-react";
+
+const LOADING_MESSAGES = [
+  "Estimating emissions…",
+  "Reading activity…",
+  "Calculating CO₂e…",
+  "Almost there…",
+];
 import type { LoggedActivity } from "@/types/activity";
 import { calculateEmissionsKgCo2e } from "@/lib/emissions/calculate";
 
 interface ActivityLoggerProps {
   onLog: (entry: LoggedActivity) => void;
+  /** Pre-filled text, e.g. from the EmptyState quick-action chips. */
+  prefill?: string;
 }
 
 interface ParseResponse {
@@ -30,13 +39,35 @@ const EXAMPLES = [
  * Surfaces the AI's confidence as a guardrail so low-confidence estimates are
  * clearly flagged rather than presented as fact.
  */
-export function ActivityLogger({ onLog }: ActivityLoggerProps) {
-  const [text, setText] = useState("");
+const CHAR_LIMIT = 500;
+
+export function ActivityLogger({ onLog, prefill }: ActivityLoggerProps) {
+  const [text, setText] = useState(prefill ?? "");
   const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lowConfidence, setLowConfidence] = useState(false);
+  const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
   const inputId = useId();
   const statusId = useId();
+
+  // Sync prefill when parent updates it (e.g. EmptyState chip click)
+  useEffect(() => {
+    if (prefill !== undefined) setText(prefill);
+  }, [prefill]);
+
+  // Rotate loading message every 1.5 s
+  useEffect(() => {
+    if (status !== "loading") return;
+    const id = setInterval(
+      () => setLoadingMsgIdx((i) => (i + 1) % LOADING_MESSAGES.length),
+      1500,
+    );
+    return () => clearInterval(id);
+  }, [status]);
+
+  const charCount = text.length;
+  const isNearLimit = charCount > 420;
+  const isOverLimit = charCount > CHAR_LIMIT;
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -99,24 +130,43 @@ export function ActivityLogger({ onLog }: ActivityLoggerProps) {
         Describe an activity in your own words
       </label>
       <div className="flex flex-col gap-2 sm:flex-row">
-        <input
-          id={inputId}
-          type="text"
-          value={text}
-          onChange={(event) => setText(event.target.value)}
-          placeholder="e.g. drove 14 km to work and had a chicken sandwich for lunch"
-          className="flex-1 rounded-lg border border-stone-300 bg-white px-3 py-2 text-sm text-stone-900 outline-none transition focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
-          maxLength={500}
-        />
+        <div className="relative flex-1">
+          <input
+            id={inputId}
+            type="text"
+            value={text}
+            onChange={(event) => setText(event.target.value.slice(0, CHAR_LIMIT))}
+            placeholder="e.g. drove 14 km to work and had a chicken sandwich for lunch"
+            className={`w-full rounded-lg border bg-white px-3 py-2 pr-14 text-sm text-stone-900 outline-none transition focus-visible:ring-2 dark:bg-stone-900 dark:text-stone-100 ${
+              isOverLimit
+                ? "border-rose-400 focus-visible:border-rose-500 focus-visible:ring-rose-500/40"
+                : "border-stone-300 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/40 dark:border-stone-700"
+            }`}
+          />
+          {charCount > 0 && (
+            <span
+              aria-hidden="true"
+              className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs tabular-nums ${
+                isOverLimit
+                  ? "text-rose-500"
+                  : isNearLimit
+                    ? "text-amber-500"
+                    : "text-stone-400 dark:text-stone-500"
+              }`}
+            >
+              {charCount}/{CHAR_LIMIT}
+            </span>
+          )}
+        </div>
         <button
           type="submit"
-          disabled={status === "loading" || !text.trim()}
+          disabled={status === "loading" || !text.trim() || isOverLimit}
           className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {status === "loading" ? (
             <>
-              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
-              Logging…
+              <Leaf className="h-4 w-4 animate-pulse" aria-hidden="true" />
+              {LOADING_MESSAGES[loadingMsgIdx]}
             </>
           ) : (
             "Log activity"

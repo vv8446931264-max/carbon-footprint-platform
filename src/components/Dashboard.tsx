@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
-import { Compass, Download, Trash2 } from "lucide-react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { Compass, Download, Search, Trash2, X } from "lucide-react";
 import type { LoggedActivity } from "@/types/activity";
 import {
   entriesWithinDays,
@@ -34,12 +34,14 @@ import {
   hasModelledFootprint,
 } from "@/lib/simulator/reductionSimulator";
 import { CATEGORY_LABELS } from "@/lib/ui/categories";
+import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { ActivityLogger } from "./ActivityLogger";
 import { ActivityList } from "./ActivityList";
 import { AppHeader } from "./AppHeader";
 import { BaselineEstimator } from "./BaselineEstimator";
 import { CategoryBreakdown } from "./CategoryBreakdown";
 import { CoachPanel } from "./CoachPanel";
+import { FloatingActionButton } from "./FloatingActionButton";
 import { FootprintSummary } from "./FootprintSummary";
 import { GoalTracker } from "./GoalTracker";
 import { ImpactCardShare } from "./ImpactCardShare";
@@ -90,6 +92,10 @@ export function Dashboard() {
   const [retaking, setRetaking] = useState(false);
   const [confirmingClear, setConfirmingClear] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
+  const [prefill, setPrefill] = useState<string | undefined>(undefined);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [confettiKey, setConfettiKey] = useState(0);
+  const loggerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
     saveLog(entries);
@@ -99,11 +105,19 @@ export function Dashboard() {
     saveDailyBudget(dailyBudgetKg);
   }, [dailyBudgetKg]);
 
+  const scrollToLogger = useCallback(() => {
+    loggerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+    setTimeout(() => {
+      loggerRef.current?.querySelector("input")?.focus();
+    }, 400);
+  }, []);
+
   function handleLog(entry: LoggedActivity) {
     const snapshot = entries;
     setEntries((current) => appendEntry(current, entry));
+    setConfettiKey((k) => k + 1);
     setToast({
-      message: `Logged “${truncate(entry.description)}”`,
+      message: `Logged "${truncate(entry.description)}"`,
       undo: () => setEntries(snapshot),
     });
   }
@@ -127,7 +141,7 @@ export function Dashboard() {
     setEntries((current) => current.filter((entry) => entry.id !== id));
     setToast({
       message: removed
-        ? `Removed “${truncate(removed.description)}”`
+        ? `Removed "${truncate(removed.description)}"`
         : "Removed entry",
       undo: () => setEntries(snapshot),
     });
@@ -153,6 +167,21 @@ export function Dashboard() {
     link.click();
     setTimeout(() => URL.revokeObjectURL(url), 15_000);
   }
+
+  // Use a ref so keyboard shortcut handlers always see fresh state without
+  // needing to be recreated on every render.
+  const toastRef = useRef(toast);
+  toastRef.current = toast;
+
+  useKeyboardShortcuts([
+    { key: "n", ctrl: true, handler: scrollToLogger },
+    {
+      key: "z",
+      ctrl: true,
+      handler: () => { toastRef.current?.undo?.(); setToast(null); },
+    },
+    { key: "e", ctrl: true, handler: handleExport },
+  ]);
 
   function handleUndo() {
     toast?.undo?.();
@@ -226,6 +255,12 @@ export function Dashboard() {
       topCategoryLabel: topLabel,
     };
   }, [entries, dailyBudgetKg]);
+
+  const filteredEntries = useMemo(() => {
+    if (!searchQuery.trim()) return recentEntries;
+    const q = searchQuery.toLowerCase();
+    return recentEntries.filter((e) => e.description.toLowerCase().includes(q));
+  }, [recentEntries, searchQuery]);
 
   // Show the estimator on first visit (no stored baseline) or when re-taking.
   const showEstimator = baseline === null || retaking;
@@ -312,11 +347,14 @@ export function Dashboard() {
 
         {/* Two ways to log, side by side on wider screens. */}
         <div className={gridRow}>
-          <section aria-labelledby="logger-heading" className={cardClass}>
+          <section ref={loggerRef} aria-labelledby="logger-heading" className={cardClass}>
             <h2 id="logger-heading" className="sr-only">
               Log a new activity
             </h2>
-            <ActivityLogger onLog={handleLog} />
+            <ActivityLogger
+              onLog={handleLog}
+              prefill={prefill}
+            />
           </section>
 
           <ReceiptUpload onLogMany={handleLogMany} />
@@ -427,9 +465,37 @@ export function Dashboard() {
                 </span>
               ))}
           </div>
+          {recentEntries.length > 0 && (
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400 dark:text-stone-500" aria-hidden="true" />
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search activities…"
+                className="w-full rounded-lg border border-stone-300 bg-white py-2 pl-9 pr-9 text-sm outline-none transition focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+              />
+              {searchQuery && (
+                <button
+                  type="button"
+                  onClick={() => setSearchQuery("")}
+                  aria-label="Clear search"
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+                >
+                  <X className="h-4 w-4" aria-hidden="true" />
+                </button>
+              )}
+            </div>
+          )}
+
           <ActivityList
-            entries={recentEntries.slice(0, 20)}
+            entries={filteredEntries.slice(0, 20)}
             onDelete={handleDelete}
+            onSelectExample={(text) => {
+              setPrefill(text);
+              scrollToLogger();
+            }}
+            isFiltered={!!searchQuery.trim()}
           />
         </section>
       </div>
@@ -443,7 +509,40 @@ export function Dashboard() {
           onDismiss={() => setToast(null)}
         />
       )}
+
+      <FloatingActionButton onClick={scrollToLogger} />
+
+      {confettiKey > 0 && (
+        <Confetti key={confettiKey} />
+      )}
     </>
+  );
+}
+
+const CONFETTI_COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#f43f5e", "#8b5cf6"];
+
+function Confetti() {
+  const particles = useMemo(
+    () =>
+      Array.from({ length: 14 }, (_, i) => ({
+        id: i,
+        left: `${6 + Math.random() * 88}%`,
+        delay: `${(Math.random() * 0.4).toFixed(2)}s`,
+        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+      })),
+    [],
+  );
+
+  return (
+    <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
+      {particles.map((p) => (
+        <div
+          key={p.id}
+          className="animate-confetti-fall absolute -top-3 h-2.5 w-2.5 rounded-sm"
+          style={{ left: p.left, animationDelay: p.delay, backgroundColor: p.color }}
+        />
+      ))}
+    </div>
   );
 }
 
