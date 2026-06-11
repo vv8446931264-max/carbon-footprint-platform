@@ -37,12 +37,11 @@ export async function prepareImageForUpload(file: File): Promise<PreparedImage> 
       MAX_DIMENSION / Math.max(bitmap.width, bitmap.height),
     );
 
-    // Already small enough in pixels — recompressing won't help much.
-    if (scale === 1) {
-      bitmap.close();
-      return { base64: await fileToBase64(file), mimeType: originalMime };
-    }
-
+    // Always draw through canvas even when scale === 1. Normalising to JPEG
+    // here ensures the bytes always match the "image/jpeg" MIME type we
+    // declare — a file saved as .jpg that is actually WebP (common from
+    // browser downloads) would otherwise pass the client MIME check but fail
+    // the server-side magic-byte signature verification.
     const canvas = document.createElement("canvas");
     canvas.width = Math.round(bitmap.width * scale);
     canvas.height = Math.round(bitmap.height * scale);

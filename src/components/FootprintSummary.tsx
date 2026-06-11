@@ -1,6 +1,6 @@
 import { Target, TrendingDown, TrendingUp } from "lucide-react";
 import {
-  GLOBAL_AVERAGE_ANNUAL_TONNES,
+  INDIA_URBAN_AVERAGE_ANNUAL_TONNES,
   PARIS_ALIGNED_ANNUAL_TONNES,
 } from "@/lib/emissions/calculate";
 
@@ -35,14 +35,14 @@ export function FootprintSummary({
     periodDays > 0 ? ((totalKgCo2e / periodDays) * 365) / 1000 : 0;
   const underTarget = annualizedTonnes <= PARIS_ALIGNED_ANNUAL_TONNES;
   const vsAveragePct = Math.round(
-    (1 - annualizedTonnes / GLOBAL_AVERAGE_ANNUAL_TONNES) * 100,
+    (1 - annualizedTonnes / INDIA_URBAN_AVERAGE_ANNUAL_TONNES) * 100,
   );
 
   const tone = !hasData
     ? "stone"
     : underTarget
       ? "emerald"
-      : annualizedTonnes <= GLOBAL_AVERAGE_ANNUAL_TONNES
+      : annualizedTonnes <= INDIA_URBAN_AVERAGE_ANNUAL_TONNES
         ? "amber"
         : "rose";
   const fillColor = {
@@ -64,7 +64,7 @@ export function FootprintSummary({
     Math.min(Math.max(tonnes / SCALE_MAX_TONNES, 0), 1) * 100;
   const userPct = pos(annualizedTonnes);
   const targetPct = pos(PARIS_ALIGNED_ANNUAL_TONNES);
-  const avgPct = pos(GLOBAL_AVERAGE_ANNUAL_TONNES);
+  const avgPct = pos(INDIA_URBAN_AVERAGE_ANNUAL_TONNES);
 
   let context: string;
   if (!hasData) {
@@ -73,22 +73,24 @@ export function FootprintSummary({
   } else if (underTarget) {
     context = `On track. At this pace you'd stay within the Paris-aligned 2 t/year target${
       vsAveragePct > 0
-        ? `, about ${vsAveragePct}% below the global average`
+        ? `, about ${vsAveragePct}% below the urban India average`
         : ""
     }.`;
   } else {
     context = `That's about ${(
       annualizedTonnes / PARIS_ALIGNED_ANNUAL_TONNES
     ).toFixed(1)}× the 2 t target${
-      vsAveragePct > 0 ? ` and ${vsAveragePct}% below the global average` : ""
+      vsAveragePct > 0
+        ? ` and ${vsAveragePct}% below the urban India average`
+        : ` — above the urban India average of ~4.5 t`
     }. Small swaps below can close the gap.`;
   }
 
   const scaleLabel = hasData
     ? `At this pace, about ${annualizedTonnes.toFixed(
         1,
-      )} tonnes CO2e per year. The Paris-aligned target is 2 tonnes; the global average is 4.7 tonnes.`
-    : "Annual pace scale. The Paris-aligned target is 2 tonnes; the global average is 4.7 tonnes.";
+      )} tonnes CO2e per year. The Paris-aligned target is 2 tonnes; the urban India average is 4.5 tonnes.`
+    : "Annual pace scale. The Paris-aligned target is 2 tonnes; the urban India average is 4.5 tonnes.";
 
   return (
     <section
@@ -175,7 +177,7 @@ export function FootprintSummary({
             className="absolute -translate-x-1/2 whitespace-nowrap"
             style={{ left: `${avgPct}%` }}
           >
-            Avg 4.7t
+            Urban India 4.5t
           </span>
         </div>
       </div>

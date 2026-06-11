@@ -5,7 +5,7 @@ import { readJsonBody } from "@/lib/api/readJsonBody";
 import { calculateEmissionsKgCo2e } from "@/lib/emissions/calculate";
 import { estimateCostUsd } from "@/lib/emissions/cost";
 import { enforceRateLimit, limiters } from "@/lib/security/apiLimiter";
-import { isValidImageSignature } from "@/lib/security/imageSignature";
+import { detectImageMimeType } from "@/lib/security/imageSignature";
 
 // ~8M base64 chars ≈ a 6 MB image — generous for a phone photo, but bounded so
 // a malicious client can't push huge payloads into the vision model.
@@ -37,10 +37,12 @@ export async function POST(request: Request) {
   });
   if (!body.ok) return body.response;
 
-  // Verify the bytes actually match the claimed image type before spending a
-  // (costly) vision call on them — blocks garbage payloads dressed up with an
-  // image MIME type.
-  if (!isValidImageSignature(body.data.imageBase64, body.data.mimeType)) {
+  // Detect the actual image format from magic bytes — never trust the client's
+  // claimed mimeType. This also handles mis-labelled files (e.g. a WebP saved
+  // with a .jpg extension) by forwarding the real format to the vision model
+  // instead of rejecting the upload.
+  const detectedMimeType = detectImageMimeType(body.data.imageBase64);
+  if (!detectedMimeType) {
     return NextResponse.json(
       { error: "That file doesn't look like a valid image." },
       { status: 400 },
@@ -50,7 +52,7 @@ export async function POST(request: Request) {
   try {
     const { sourceLabel, items } = await parseReceiptImage(
       body.data.imageBase64,
-      body.data.mimeType,
+      detectedMimeType,
     );
 
     // Compute emissions + cost server-side so the client never has to trust

@@ -261,6 +261,17 @@ export function Dashboard() {
             Log everyday activities in plain language, or scan a receipt, and
             see a clear, personalized picture of your impact.
           </p>
+          <p className="mt-2 max-w-2xl text-sm text-stone-500 dark:text-stone-400">
+            India&apos;s urban households emit{" "}
+            <span className="font-semibold text-amber-700 dark:text-amber-400">
+              4–5 t CO₂e / year
+            </span>
+            . The Paris-aligned target is{" "}
+            <span className="font-semibold text-emerald-700 dark:text-emerald-400">
+              2 t / year
+            </span>
+            . This dashboard helps you close that gap.
+          </p>
         </div>
 
         {showEstimator ? (

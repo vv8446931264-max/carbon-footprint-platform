@@ -36,9 +36,21 @@ export function Methodology() {
         <p>
           Your progress is measured against a{" "}
           <strong>science-based target of ~2 tonnes CO₂e per year</strong>, the
-          per-person level broadly consistent with keeping warming well below 2
-          °C. It is a more meaningful goal than simply beating today&apos;s
-          global average of ~4.7 t/year.
+          per-person level broadly consistent with keeping warming well below
+          2 °C (the Paris Agreement pathway). This target applies equally to
+          everyone globally — it is more meaningful than simply beating an
+          average.
+        </p>
+        <p>
+          <strong>For Indian users:</strong> India&apos;s national average is
+          already ~2 t/year, but that figure is pulled down by rural and
+          lower-consumption households. Urban middle-class households — the
+          typical user of this app — often reach <strong>4–5 t/year</strong>{" "}
+          due to car travel, air conditioning, flights, and higher food and
+          shopping consumption. The comparison marker on the scale shows the{" "}
+          <strong>urban India average (~4.5 t)</strong> rather than the global
+          average, so you can see where you stand relative to a realistic peer
+          group.
         </p>
         <p className="text-xs text-stone-500 dark:text-stone-400">
           <strong>Limitations:</strong> these are illustrative averages, not

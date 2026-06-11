@@ -18,7 +18,7 @@ interface ParseResponse {
 
 const EXAMPLES = [
   "drove 14 km to work",
-  "had a beef burger for lunch",
+  "had chicken biryani for lunch",
   "took the train 40 km",
   "used 8 kWh of electricity",
 ];

@@ -9,7 +9,7 @@ import {
   type BaselineAnswers,
 } from "@/lib/baseline/estimate";
 import {
-  GLOBAL_AVERAGE_ANNUAL_TONNES,
+  INDIA_URBAN_AVERAGE_ANNUAL_TONNES,
   PARIS_ALIGNED_ANNUAL_TONNES,
 } from "@/lib/emissions/calculate";
 import type { StoredBaseline } from "@/lib/storage/baseline";
@@ -38,8 +38,8 @@ export function BaselineEstimator({
   const answered = BASELINE_QUESTIONS.filter((q) => answers[q.id]).length;
 
   const vsTarget = tonnes / PARIS_ALIGNED_ANNUAL_TONNES;
-  const vsAverage = Math.round(
-    (1 - tonnes / GLOBAL_AVERAGE_ANNUAL_TONNES) * 100,
+  const vsUrbanIndia = Math.round(
+    (1 - tonnes / INDIA_URBAN_AVERAGE_ANNUAL_TONNES) * 100,
   );
 
   function choose(questionId: string, value: string) {
@@ -132,10 +132,11 @@ export function BaselineEstimator({
               <p className="mt-1 text-xs text-stone-500 dark:text-stone-400">
                 {vsTarget > 1
                   ? `That's ${vsTarget.toFixed(1)}× the Paris-aligned 2 t target`
-                  : "You're already at or below the 2 t target"}
-                {vsAverage > 0
-                  ? ` · ${vsAverage}% below the global average`
-                  : ` · ${Math.abs(vsAverage)}% above the global average`}
+                  : "At or below the Paris-aligned 2 t target — India's national average is ~2 t, but urban households typically reach 4–5 t"}
+                {vsTarget > 1 &&
+                  (vsUrbanIndia > 0
+                    ? ` · ${vsUrbanIndia}% below the urban India average`
+                    : ` · above the urban India average of ~4.5 t`)}
                 .
               </p>
             </div>

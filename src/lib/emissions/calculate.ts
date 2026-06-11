@@ -33,8 +33,17 @@ export function sumEmissions(values: number[]): number {
   );
 }
 
-/** Average global per-capita annual footprint, used as a comparison baseline (tonnes CO2e). */
+/** Average global per-capita annual footprint (tonnes CO2e). */
 export const GLOBAL_AVERAGE_ANNUAL_TONNES = 4.7;
+
+/**
+ * Urban India per-capita annual footprint. India's national average is ~2 t
+ * (already near the Paris target), but urban households — the primary audience
+ * for this app — typically reach 4–5 t/year due to car use, AC, and higher
+ * consumption. Used as the comparison marker instead of the global average so
+ * the scale is meaningful for Indian users.
+ */
+export const INDIA_URBAN_AVERAGE_ANNUAL_TONNES = 4.5;
 
 /**
  * Paris-aligned per-capita target: to keep warming well below 2°C, individual
