@@ -1,7 +1,7 @@
 "use client";
 
-import { useEffect, useId, useState } from "react";
-import { Leaf, Sparkles } from "lucide-react";
+import { useEffect, useId, useRef, useState } from "react";
+import { Check, Leaf, Sparkles } from "lucide-react";
 
 const LOADING_MESSAGES = [
   "Estimating emissions…",
@@ -32,21 +32,15 @@ const EXAMPLES = [
   "used 8 kWh of electricity",
 ];
 
-/**
- * Lets a person describe an activity in plain language ("drove 12km to work")
- * and turns it into a logged, quantified entry via the /api/parse-activity
- * route. Fully keyboard-operable and announces status changes to screen readers.
- * Surfaces the AI's confidence as a guardrail so low-confidence estimates are
- * clearly flagged rather than presented as fact.
- */
 const CHAR_LIMIT = 500;
 
 export function ActivityLogger({ onLog, prefill }: ActivityLoggerProps) {
   const [text, setText] = useState(prefill ?? "");
-  const [status, setStatus] = useState<"idle" | "loading" | "error">("idle");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [lowConfidence, setLowConfidence] = useState(false);
   const [loadingMsgIdx, setLoadingMsgIdx] = useState(0);
+  const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputId = useId();
   const statusId = useId();
 
@@ -64,6 +58,13 @@ export function ActivityLogger({ onLog, prefill }: ActivityLoggerProps) {
     );
     return () => clearInterval(id);
   }, [status]);
+
+  // Clean up success timer on unmount
+  useEffect(() => {
+    return () => {
+      if (successTimerRef.current) clearTimeout(successTimerRef.current);
+    };
+  }, []);
 
   const charCount = text.length;
   const isNearLimit = charCount > 420;
@@ -104,7 +105,10 @@ export function ActivityLogger({ onLog, prefill }: ActivityLoggerProps) {
 
       setLowConfidence(data.confidence === "low");
       setText("");
-      setStatus("idle");
+      setStatus("success");
+
+      // Reset to idle after 2 seconds so button returns to normal
+      successTimerRef.current = setTimeout(() => setStatus("idle"), 2000);
     } catch (error) {
       setStatus("error");
       setErrorMessage(
@@ -127,7 +131,7 @@ export function ActivityLogger({ onLog, prefill }: ActivityLoggerProps) {
           className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
           aria-hidden="true"
         />
-        Describe an activity in your own words
+        What did you do today?
       </label>
       <div className="flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">
@@ -136,7 +140,7 @@ export function ActivityLogger({ onLog, prefill }: ActivityLoggerProps) {
             type="text"
             value={text}
             onChange={(event) => setText(event.target.value.slice(0, CHAR_LIMIT))}
-            placeholder="e.g. drove 14 km to work and had a chicken sandwich for lunch"
+            placeholder="e.g. drove 10 km to work"
             className={`w-full rounded-lg border bg-white px-3 py-2 pr-14 text-sm text-stone-900 outline-none transition focus-visible:ring-2 dark:bg-stone-900 dark:text-stone-100 ${
               isOverLimit
                 ? "border-rose-400 focus-visible:border-rose-500 focus-visible:ring-rose-500/40"
@@ -161,12 +165,21 @@ export function ActivityLogger({ onLog, prefill }: ActivityLoggerProps) {
         <button
           type="submit"
           disabled={status === "loading" || !text.trim() || isOverLimit}
-          className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition hover:bg-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+          className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 ${
+            status === "success"
+              ? "bg-emerald-500 hover:bg-emerald-600"
+              : "bg-emerald-600 hover:bg-emerald-700"
+          }`}
         >
           {status === "loading" ? (
             <>
               <Leaf className="h-4 w-4 animate-pulse" aria-hidden="true" />
               {LOADING_MESSAGES[loadingMsgIdx]}
+            </>
+          ) : status === "success" ? (
+            <>
+              <Check className="h-4 w-4" aria-hidden="true" />
+              Logged!
             </>
           ) : (
             "Log activity"
@@ -199,7 +212,7 @@ export function ActivityLogger({ onLog, prefill }: ActivityLoggerProps) {
         {status === "error" && (
           <span className="text-red-600 dark:text-red-400">{errorMessage}</span>
         )}
-        {status === "idle" && lowConfidence && (
+        {(status === "idle" || status === "success") && lowConfidence && (
           <span className="text-amber-700 dark:text-amber-400">
             Logged as a best guess. Add an amount or detail for a more accurate
             estimate.

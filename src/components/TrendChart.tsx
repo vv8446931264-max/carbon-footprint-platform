@@ -131,26 +131,6 @@ function TrendChartComponent({ data, weeklyTargetKg }: TrendChartProps) {
             </ResponsiveContainer>
           </div>
 
-          <table className="sr-only">
-            <caption>
-              Weekly emissions in kilograms of CO₂ equivalent. The target pace
-              is {weeklyTargetKg.toFixed(1)} kg per week.
-            </caption>
-            <thead>
-              <tr>
-                <th scope="col">Week starting</th>
-                <th scope="col">Emissions (kg CO₂e)</th>
-              </tr>
-            </thead>
-            <tbody>
-              {data.map((d) => (
-                <tr key={d.weekStart}>
-                  <th scope="row">{d.weekStart}</th>
-                  <td>{d.kgCo2e.toFixed(1)}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
         </>
       )}
     </section>
@@ -163,12 +143,23 @@ function formatWeek(isoDate: string): string {
 }
 
 function describeTrend(data: WeeklyTotal[], weeklyTargetKg: number): string {
-  const parts = data
-    .filter((d) => d.kgCo2e > 0)
-    .map((d) => `week of ${d.weekStart}: ${d.kgCo2e.toFixed(1)} kg`);
-  return `Area chart of weekly CO2 emissions against a ${weeklyTargetKg.toFixed(
-    1,
-  )} kg weekly target. ${parts.join(", ")}.`;
+  const nonZero = data.filter((d) => d.kgCo2e > 0);
+  if (!nonZero.length) return "Weekly emissions area chart. No data yet.";
+  const latest = nonZero[nonZero.length - 1];
+  const prev = nonZero[nonZero.length - 2];
+  const direction =
+    prev == null
+      ? ""
+      : latest.kgCo2e < prev.kgCo2e
+        ? ", trending down"
+        : latest.kgCo2e > prev.kgCo2e
+          ? ", trending up"
+          : ", flat";
+  const vsTarget =
+    latest.kgCo2e <= weeklyTargetKg
+      ? "below the 2 t/yr target"
+      : "above the 2 t/yr target";
+  return `Weekly emissions chart. Latest: ${latest.kgCo2e.toFixed(1)} kg CO₂e (${vsTarget}${direction}). Target line: ${weeklyTargetKg.toFixed(1)} kg/week.`;
 }
 
 export const TrendChart = memo(TrendChartComponent);

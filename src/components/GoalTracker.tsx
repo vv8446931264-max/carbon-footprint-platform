@@ -94,15 +94,16 @@ export function GoalTracker({
             />
             <text
               x="48"
-              y="44"
+              y="50"
               textAnchor="middle"
-              className="fill-stone-900 text-[15px] font-semibold dark:fill-stone-50"
+              dominantBaseline="middle"
+              className="fill-stone-900 text-[22px] font-bold dark:fill-stone-50"
             >
               {todayKg.toFixed(1)}
             </text>
             <text
               x="48"
-              y="60"
+              y="66"
               textAnchor="middle"
               className="fill-stone-500 text-[10px] dark:fill-stone-400"
             >
@@ -129,7 +130,7 @@ export function GoalTracker({
               htmlFor={inputId}
               className="text-xs font-medium text-stone-600 dark:text-stone-300"
             >
-              Set daily budget (kg CO₂e)
+              Daily goal (kg CO₂e)
             </label>
             <input
               id={inputId}

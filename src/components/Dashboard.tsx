@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Compass, Download, Search, Trash2, X } from "lucide-react";
-import type { LoggedActivity } from "@/types/activity";
+import { Compass, Download, Keyboard, Search, Trash2, X } from "lucide-react";
+import type { ActivityCategory, LoggedActivity } from "@/types/activity";
 import {
   entriesWithinDays,
   totalEmissions,
@@ -33,7 +33,7 @@ import {
   annualBreakdownFromEntries,
   hasModelledFootprint,
 } from "@/lib/simulator/reductionSimulator";
-import { CATEGORY_LABELS } from "@/lib/ui/categories";
+import { CATEGORY_LABELS, CATEGORY_VISUALS } from "@/lib/ui/categories";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { ActivityLogger } from "./ActivityLogger";
 import { ActivityList } from "./ActivityList";
@@ -55,33 +55,24 @@ import { Toast } from "./Toast";
 const PERIOD_DAYS = 30;
 const TREND_WEEKS = 8;
 const WEEKLY_TARGET_KG = PARIS_ALIGNED_DAILY_KG * 7;
+// Trend and coach panels need enough data points to be meaningful
+const MIN_ENTRIES_FOR_INSIGHTS = 3;
+// How many activities to show before "Show more"
+const DEFAULT_VISIBLE = 5;
 
 interface ToastState {
   message: string;
-  /**
-   * Action that reverses what this toast announced (re-adds a deleted entry,
-   * removes a just-logged one, restores a cleared log…). Omit for toasts with
-   * nothing to undo. A closure keeps the undo logic next to the action.
-   */
   undo?: () => void;
 }
 
 const cardClass =
   "rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900";
 
-/** Two-up responsive grid that collapses to a single column on small screens. */
 const gridRow = "grid gap-6 md:grid-cols-2";
 
-/**
- * Top-level client component that owns the activity log + goal state and
- * derives every view (summary, chart, streaks, coach input, share card)
- * from it. Persists to localStorage so a person's data survives reloads
- * without needing a backend for the demo.
- */
+const ALL_CATEGORIES = Object.keys(CATEGORY_VISUALS) as ActivityCategory[];
+
 export function Dashboard() {
-  // Lazy initializer runs once on the client during the first render, so the
-  // log is available immediately without an extra effect-driven re-render.
-  // loadLog/saveLog are no-ops on the server (guarded inside the storage module).
   const [entries, setEntries] = useState<LoggedActivity[]>(() => loadLog());
   const [dailyBudgetKg, setDailyBudgetKg] = useState<number>(() =>
     loadDailyBudget(),
@@ -94,7 +85,10 @@ export function Dashboard() {
   const [toast, setToast] = useState<ToastState | null>(null);
   const [prefill, setPrefill] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
+  const [categoryFilter, setCategoryFilter] = useState<"all" | ActivityCategory>("all");
+  const [visibleCount, setVisibleCount] = useState(DEFAULT_VISIBLE);
   const [confettiKey, setConfettiKey] = useState(0);
+  const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
   const loggerRef = useRef<HTMLElement>(null);
 
   useEffect(() => {
@@ -105,6 +99,11 @@ export function Dashboard() {
     saveDailyBudget(dailyBudgetKg);
   }, [dailyBudgetKg]);
 
+  // Reset visible count whenever search or category filter changes
+  useEffect(() => {
+    setVisibleCount(DEFAULT_VISIBLE);
+  }, [searchQuery, categoryFilter]);
+
   const scrollToLogger = useCallback(() => {
     loggerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
     setTimeout(() => {
@@ -113,9 +112,11 @@ export function Dashboard() {
   }, []);
 
   function handleLog(entry: LoggedActivity) {
+    const wasFirst = entries.length === 0;
     const snapshot = entries;
     setEntries((current) => appendEntry(current, entry));
-    setConfettiKey((k) => k + 1);
+    // Confetti only on the first activity ever — milestones should feel special
+    if (wasFirst) setConfettiKey((k) => k + 1);
     setToast({
       message: `Logged "${truncate(entry.description)}"`,
       undo: () => setEntries(snapshot),
@@ -168,8 +169,6 @@ export function Dashboard() {
     setTimeout(() => URL.revokeObjectURL(url), 15_000);
   }
 
-  // Use a ref so keyboard shortcut handlers always see fresh state without
-  // needing to be recreated on every render.
   const toastRef = useRef(toast);
   toastRef.current = toast;
 
@@ -181,6 +180,7 @@ export function Dashboard() {
       handler: () => { toastRef.current?.undo?.(); setToast(null); },
     },
     { key: "e", ctrl: true, handler: handleExport },
+    { key: "?", handler: () => setShowShortcutsHelp((v) => !v) },
   ]);
 
   function handleUndo() {
@@ -257,28 +257,32 @@ export function Dashboard() {
   }, [entries, dailyBudgetKg]);
 
   const filteredEntries = useMemo(() => {
-    if (!searchQuery.trim()) return recentEntries;
-    const q = searchQuery.toLowerCase();
-    return recentEntries.filter((e) => e.description.toLowerCase().includes(q));
-  }, [recentEntries, searchQuery]);
+    let result = recentEntries;
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((e) => e.description.toLowerCase().includes(q));
+    }
+    if (categoryFilter !== "all") {
+      result = result.filter((e) => e.activity.category === categoryFilter);
+    }
+    return result;
+  }, [recentEntries, searchQuery, categoryFilter]);
 
-  // Show the estimator on first visit (no stored baseline) or when re-taking.
   const showEstimator = baseline === null || retaking;
   const hasSavedEstimate = baseline !== null && baseline.annualTonnes > 0;
 
-  // Progressive disclosure: until there's at least one logged activity, the
-  // trend/coach/share cards have nothing to show, so we hide them rather than
-  // greet a new user with a wall of empty panels. They appear the moment the
-  // first activity is logged.
   const hasEntries = entries.length > 0;
+  const hasEnoughForInsights = entries.length >= MIN_ENTRIES_FOR_INSIGHTS;
 
-  // Feed the what-if simulator from logged activity when we have it, otherwise
-  // from the baseline estimate, so it's usable the moment onboarding is done.
   const simulatorBreakdown = hasEntries
     ? annualBreakdownFromEntries(categoryTotals, PERIOD_DAYS)
     : baseline && baseline.annualTonnes > 0
       ? annualBreakdownFromBaseline(baseline.answers)
       : null;
+
+  const visibleEntries = filteredEntries.slice(0, visibleCount);
+  const remainingCount = filteredEntries.length - visibleCount;
+  const isFiltered = !!(searchQuery.trim() || categoryFilter !== "all");
 
   return (
     <>
@@ -345,7 +349,6 @@ export function Dashboard() {
           totalCostUsd={totalCostUsd}
         />
 
-        {/* Two ways to log, side by side on wider screens. */}
         <div className={gridRow}>
           <section ref={loggerRef} aria-labelledby="logger-heading" className={cardClass}>
             <h2 id="logger-heading" className="sr-only">
@@ -360,7 +363,6 @@ export function Dashboard() {
           <ReceiptUpload onLogMany={handleLogMany} />
         </div>
 
-        {/* Motivation + data, side by side. */}
         <div className={gridRow}>
           <GoalTracker
             dailyBudgetKg={dailyBudgetKg}
@@ -380,11 +382,12 @@ export function Dashboard() {
           />
         )}
 
-        {hasEntries && (
+        {/* Trend and coach panels are only meaningful with enough data points */}
+        {hasEnoughForInsights && (
           <TrendChart data={trend} weeklyTargetKg={WEEKLY_TARGET_KG} />
         )}
 
-        {hasEntries && (
+        {hasEnoughForInsights && (
           <CoachPanel
             totalKgCo2e={total}
             periodDays={PERIOD_DAYS}
@@ -392,8 +395,6 @@ export function Dashboard() {
           />
         )}
 
-        {/* Trust + share. Share has nothing to summarise until something's
-            logged, so it joins Methodology only once there are entries. */}
         {hasEntries ? (
           <div className={gridRow}>
             <Methodology />
@@ -465,38 +466,69 @@ export function Dashboard() {
                 </span>
               ))}
           </div>
+
           {recentEntries.length > 0 && (
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400 dark:text-stone-500" aria-hidden="true" />
-              <input
-                type="text"
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search activities…"
-                className="w-full rounded-lg border border-stone-300 bg-white py-2 pl-9 pr-9 text-sm outline-none transition focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
-              />
-              {searchQuery && (
-                <button
-                  type="button"
-                  onClick={() => setSearchQuery("")}
-                  aria-label="Clear search"
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
-                >
-                  <X className="h-4 w-4" aria-hidden="true" />
-                </button>
-              )}
+            <div className="flex gap-2">
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400 dark:text-stone-500" aria-hidden="true" />
+                <input
+                  type="text"
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  placeholder="Search activities…"
+                  className="w-full rounded-lg border border-stone-300 bg-white py-2 pl-9 pr-9 text-sm outline-none transition focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={() => setSearchQuery("")}
+                    aria-label="Clear search"
+                    className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+                  >
+                    <X className="h-4 w-4" aria-hidden="true" />
+                  </button>
+                )}
+              </div>
+              <select
+                value={categoryFilter}
+                onChange={(e) =>
+                  setCategoryFilter(e.target.value as "all" | ActivityCategory)
+                }
+                aria-label="Filter by category"
+                className="rounded-lg border border-stone-300 bg-white px-2.5 py-2 text-sm text-stone-700 outline-none transition focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200"
+              >
+                <option value="all">All</option>
+                {ALL_CATEGORIES.map((cat) => (
+                  <option key={cat} value={cat}>
+                    {CATEGORY_LABELS[cat]}
+                  </option>
+                ))}
+              </select>
             </div>
           )}
 
           <ActivityList
-            entries={filteredEntries.slice(0, 20)}
+            entries={visibleEntries}
             onDelete={handleDelete}
             onSelectExample={(text) => {
               setPrefill(text);
               scrollToLogger();
             }}
-            isFiltered={!!searchQuery.trim()}
+            isFiltered={isFiltered}
           />
+
+          {remainingCount > 0 && (
+            <button
+              type="button"
+              onClick={() => setVisibleCount((n) => n + DEFAULT_VISIBLE)}
+              className="mt-1 w-full rounded-xl border border-stone-200 bg-white py-2.5 text-sm font-medium text-stone-600 transition hover:border-emerald-300 hover:text-emerald-700 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-emerald-700 dark:hover:text-emerald-400"
+            >
+              Show {Math.min(remainingCount, DEFAULT_VISIBLE)} more
+              <span className="ml-1 text-stone-400 dark:text-stone-500">
+                ({remainingCount} remaining)
+              </span>
+            </button>
+          )}
         </section>
       </div>
 
@@ -507,6 +539,7 @@ export function Dashboard() {
           message={toast.message}
           onUndo={toast.undo ? handleUndo : undefined}
           onDismiss={() => setToast(null)}
+          duration={toast.undo ? 10000 : 6000}
         />
       )}
 
@@ -515,9 +548,15 @@ export function Dashboard() {
       {confettiKey > 0 && (
         <Confetti key={confettiKey} />
       )}
+
+      {showShortcutsHelp && (
+        <ShortcutsModal onClose={() => setShowShortcutsHelp(false)} />
+      )}
     </>
   );
 }
+
+// ─── Confetti ─────────────────────────────────────────────────────────────────
 
 const CONFETTI_COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#f43f5e", "#8b5cf6"];
 
@@ -545,6 +584,73 @@ function Confetti() {
     </div>
   );
 }
+
+// ─── Keyboard shortcuts modal ─────────────────────────────────────────────────
+
+const SHORTCUTS = [
+  { keys: ["Ctrl", "N"], label: "Focus the activity input" },
+  { keys: ["Ctrl", "Z"], label: "Undo the last action" },
+  { keys: ["Ctrl", "E"], label: "Export your data as JSON" },
+  { keys: ["?"], label: "Toggle this help panel" },
+];
+
+function ShortcutsModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="shortcuts-heading"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+    >
+      <div
+        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+        onClick={onClose}
+        aria-hidden="true"
+      />
+      <div className="relative w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-xl dark:border-stone-700 dark:bg-stone-900">
+        <div className="mb-4 flex items-center justify-between">
+          <h2
+            id="shortcuts-heading"
+            className="flex items-center gap-2 text-sm font-semibold text-stone-900 dark:text-stone-50"
+          >
+            <Keyboard className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+            Keyboard shortcuts
+          </h2>
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Close shortcuts panel"
+            className="rounded-md p-1 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-stone-800 dark:hover:text-stone-200"
+          >
+            <X className="h-4 w-4" aria-hidden="true" />
+          </button>
+        </div>
+        <ul className="flex flex-col gap-3">
+          {SHORTCUTS.map((shortcut) => (
+            <li key={shortcut.label} className="flex items-center justify-between gap-4">
+              <span className="text-sm text-stone-600 dark:text-stone-300">{shortcut.label}</span>
+              <span className="flex shrink-0 items-center gap-1">
+                {shortcut.keys.map((k) => (
+                  <kbd
+                    key={k}
+                    className="rounded border border-stone-300 bg-stone-100 px-1.5 py-0.5 font-mono text-xs text-stone-700 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200"
+                  >
+                    {k}
+                  </kbd>
+                ))}
+              </span>
+            </li>
+          ))}
+        </ul>
+        <p className="mt-4 text-xs text-stone-400 dark:text-stone-500">
+          Shortcuts are inactive when an input is focused.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function truncate(text: string, max = 40): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
