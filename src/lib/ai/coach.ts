@@ -1,11 +1,12 @@
 import { z } from "zod";
 import type { CoachReport, CoachReportInput } from "@/types/ai";
+import { sanitizeText } from "@/lib/security/sanitize";
 import { extractJson, generateText } from "./vertexClient";
 
 const coachReportSchema = z.object({
-  summary: z.string().min(1).max(400),
-  encouragement: z.string().min(1).max(280),
-  tips: z.array(z.string().min(1).max(220)).min(1).max(5),
+  summary: z.string().min(1).max(400).transform(sanitizeText),
+  encouragement: z.string().min(1).max(280).transform(sanitizeText),
+  tips: z.array(z.string().min(1).max(220).transform(sanitizeText)).min(1).max(5),
 });
 
 const SYSTEM_INSTRUCTION = `You are a supportive personal carbon-footprint coach. Given a summary of a

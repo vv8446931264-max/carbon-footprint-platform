@@ -74,7 +74,11 @@ export async function readJsonBody<S extends z.ZodTypeAny>(
       response: NextResponse.json(
         {
           error: options.invalidMessage ?? "Invalid request.",
-          details: parsed.error.flatten(),
+          // Expose field-level detail in development only — in production this
+          // leaks schema structure to callers and aids payload crafting.
+          ...(process.env.NODE_ENV === "development" && {
+            details: parsed.error.flatten(),
+          }),
         },
         { status: 400 },
       ),

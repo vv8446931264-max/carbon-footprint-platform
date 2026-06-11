@@ -27,10 +27,11 @@ const requestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID();
+
   const limited = enforceRateLimit(request, limiters.receipt);
   if (limited) return limited;
 
-  // Size-capped, JSON-parsed, and Zod-validated in one shared guard.
   const body = await readJsonBody(request, requestSchema, {
     maxBytes: MAX_BODY_BYTES,
     invalidMessage: "Invalid image upload.",
@@ -44,7 +45,7 @@ export async function POST(request: Request) {
   const detectedMimeType = detectImageMimeType(body.data.imageBase64);
   if (!detectedMimeType) {
     return NextResponse.json(
-      { error: "That file doesn't look like a valid image." },
+      { error: "That file doesn't look like a valid image.", requestId },
       { status: 400 },
     );
   }
@@ -66,13 +67,19 @@ export async function POST(request: Request) {
     return NextResponse.json({ sourceLabel, items: enriched });
   } catch (error) {
     if (error instanceof ReceiptParseError) {
-      console.warn("Receipt parse guardrail:", error.message, error.cause);
-      return NextResponse.json({ error: error.userMessage }, { status: 422 });
+      console.warn(JSON.stringify({
+        severity: "WARN", requestId, endpoint: "/api/parse-receipt",
+        errorType: "ReceiptParseError", message: error.message,
+      }));
+      return NextResponse.json({ error: error.userMessage, requestId }, { status: 422 });
     }
 
-    console.error("Unexpected error parsing receipt:", error);
+    console.error(JSON.stringify({
+      severity: "ERROR", requestId, endpoint: "/api/parse-receipt",
+      errorType: "UnexpectedError", message: String(error),
+    }));
     return NextResponse.json(
-      { error: "Something went wrong on our end while reading that image." },
+      { error: "Something went wrong on our end while reading that image.", requestId },
       { status: 500 },
     );
   }

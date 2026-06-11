@@ -5,11 +5,12 @@ import {
   activitySchema,
   categoryEnum,
 } from "./activitySchema";
+import { sanitizeText } from "@/lib/security/sanitize";
 import { extractJson, generateText } from "./vertexClient";
 
 const parsedResponseSchema = z.object({
   category: categoryEnum,
-  description: z.string().min(1).max(280),
+  description: z.string().min(1).max(280).transform(sanitizeText),
   confidence: z.enum(["high", "medium", "low"]),
   activity: activitySchema,
 });

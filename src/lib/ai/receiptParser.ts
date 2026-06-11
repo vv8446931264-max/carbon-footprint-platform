@@ -5,6 +5,7 @@ import {
   activitySchema,
   categoryEnum,
 } from "./activitySchema";
+import { sanitizeText } from "@/lib/security/sanitize";
 import { extractJson, generateFromImage } from "./vertexClient";
 
 export interface ParsedReceiptItem {
@@ -21,13 +22,13 @@ export interface ReceiptParseResult {
 
 const itemSchema = z.object({
   category: categoryEnum,
-  description: z.string().min(1).max(200),
+  description: z.string().min(1).max(200).transform(sanitizeText),
   confidence: z.enum(["high", "medium", "low"]),
   activity: activitySchema,
 });
 
 const receiptSchema = z.object({
-  sourceLabel: z.string().max(120).nullish(),
+  sourceLabel: z.string().max(120).transform(sanitizeText).nullish(),
   items: z.array(itemSchema).max(25),
 });
 

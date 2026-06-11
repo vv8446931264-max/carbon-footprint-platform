@@ -18,10 +18,11 @@ const requestSchema = z.object({
 });
 
 export async function POST(request: Request) {
+  const requestId = crypto.randomUUID();
+
   const limited = enforceRateLimit(request, limiters.text);
   if (limited) return limited;
 
-  // Size-capped, JSON-parsed, and Zod-validated in one shared guard.
   const body = await readJsonBody(request, requestSchema);
   if (!body.ok) return body.response;
 
@@ -30,16 +31,19 @@ export async function POST(request: Request) {
     return NextResponse.json(report);
   } catch (error) {
     if (error instanceof CoachReportError) {
-      // Same contract as the other AI routes: internal reason (with cause)
-      // goes to the server log; only the pre-vetted, user-safe message is
-      // sent to the client.
-      console.warn("Coach report guardrail:", error.message, error.cause);
-      return NextResponse.json({ error: error.userMessage }, { status: 422 });
+      console.warn(JSON.stringify({
+        severity: "WARN", requestId, endpoint: "/api/coach",
+        errorType: "CoachReportError", message: error.message,
+      }));
+      return NextResponse.json({ error: error.userMessage, requestId }, { status: 422 });
     }
 
-    console.error("Unexpected error generating coach report:", error);
+    console.error(JSON.stringify({
+      severity: "ERROR", requestId, endpoint: "/api/coach",
+      errorType: "UnexpectedError", message: String(error),
+    }));
     return NextResponse.json(
-      { error: "Something went wrong while generating the report." },
+      { error: "Something went wrong while generating the report.", requestId },
       { status: 500 },
     );
   }
