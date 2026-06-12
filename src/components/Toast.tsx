@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Check, Undo2, X } from "lucide-react";
 
 interface ToastProps {
@@ -24,9 +24,20 @@ export function Toast({
   onDismiss,
   duration = 6000,
 }: ToastProps) {
+  // Seconds left before auto-dismiss, shown on the Undo button so people know
+  // how long their safety net lasts instead of panic-clicking.
+  const [secondsLeft, setSecondsLeft] = useState(Math.round(duration / 1000));
+
   useEffect(() => {
     const timer = setTimeout(onDismiss, duration);
-    return () => clearTimeout(timer);
+    const tick = setInterval(
+      () => setSecondsLeft((s) => Math.max(0, s - 1)),
+      1000,
+    );
+    return () => {
+      clearTimeout(timer);
+      clearInterval(tick);
+    };
   }, [onDismiss, duration]);
 
   return (
@@ -46,6 +57,9 @@ export function Toast({
         >
           <Undo2 className="h-3.5 w-3.5" aria-hidden="true" />
           Undo
+          <span className="tabular-nums text-stone-400" aria-hidden="true">
+            · {secondsLeft}s
+          </span>
         </button>
       )}
 

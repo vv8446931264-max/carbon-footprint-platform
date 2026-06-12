@@ -101,7 +101,7 @@ export function FootprintSummary({
       <div className="flex items-center justify-between gap-3">
         <h2
           id="footprint-summary-heading"
-          className="text-sm font-medium text-stone-500 dark:text-stone-400"
+          className="text-base font-semibold text-stone-900 dark:text-stone-50"
         >
           Your footprint · last {periodDays} day{periodDays === 1 ? "" : "s"}
         </h2>

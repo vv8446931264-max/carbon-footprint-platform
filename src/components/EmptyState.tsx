@@ -37,11 +37,12 @@ export function EmptyState({ onSelectExample }: EmptyStateProps) {
       </div>
 
       <div>
-        <h3 className="text-base font-semibold text-stone-900 dark:text-stone-50">
-          Start tracking your footprint
+        <h3 className="text-lg font-semibold text-stone-900 dark:text-stone-50">
+          Log your first activity 🌱
         </h3>
         <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">
-          Tap an example below or describe your own activity above
+          Start with something simple — your commute, a meal, or last
+          night&apos;s AC. You&apos;ll see your impact in seconds.
         </p>
       </div>
 

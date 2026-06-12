@@ -1,7 +1,15 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import { Compass, Download, Keyboard, Search, Trash2, X } from "lucide-react";
+import {
+  Compass,
+  Download,
+  Keyboard,
+  LineChart,
+  Search,
+  Trash2,
+  X,
+} from "lucide-react";
 import type { ActivityCategory, LoggedActivity } from "@/types/activity";
 import {
   entriesWithinDays,
@@ -72,6 +80,20 @@ const gridRow = "grid gap-6 md:grid-cols-2";
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_VISUALS) as ActivityCategory[];
 
+/**
+ * Entry counts that earn a celebration. Confetti on every log is noise; only
+ * on the first is anticlimactic — milestones keep the habit loop rewarding.
+ */
+const MILESTONES: Record<number, string> = {
+  1: "First activity logged! 🌱",
+  10: "10 activities logged! 🎯",
+  25: "25 activities — building a real picture! 📊",
+  50: "50 activities logged! 🚀",
+  100: "Century! 100 activities logged! 🎉",
+};
+
+type SortOrder = "newest" | "emissions" | "cost";
+
 export function Dashboard() {
   const [entries, setEntries] = useState<LoggedActivity[]>(() => loadLog());
   const [dailyBudgetKg, setDailyBudgetKg] = useState<number>(() =>
@@ -86,6 +108,7 @@ export function Dashboard() {
   const [prefill, setPrefill] = useState<string | undefined>(undefined);
   const [searchQuery, setSearchQuery] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<"all" | ActivityCategory>("all");
+  const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
   const [visibleCount, setVisibleCount] = useState(DEFAULT_VISIBLE);
   const [confettiKey, setConfettiKey] = useState(0);
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
@@ -100,10 +123,10 @@ export function Dashboard() {
     saveDailyBudget(dailyBudgetKg);
   }, [dailyBudgetKg]);
 
-  // Reset visible count whenever search or category filter changes
+  // Reset visible count whenever search, filter, or sort changes
   useEffect(() => {
     setVisibleCount(DEFAULT_VISIBLE);
-  }, [searchQuery, categoryFilter]);
+  }, [searchQuery, categoryFilter, sortOrder]);
 
   const scrollToLogger = useCallback(() => {
     loggerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -113,13 +136,12 @@ export function Dashboard() {
   }, []);
 
   function handleLog(entry: LoggedActivity) {
-    const wasFirst = entries.length === 0;
     const snapshot = entries;
+    const milestone = MILESTONES[entries.length + 1];
     setEntries((current) => appendEntry(current, entry));
-    // Confetti only on the first activity ever — milestones should feel special
-    if (wasFirst) setConfettiKey((k) => k + 1);
+    if (milestone) setConfettiKey((k) => k + 1);
     setToast({
-      message: `Logged "${truncate(entry.description)}"`,
+      message: milestone ?? `Logged "${truncate(entry.description)}"`,
       undo: () => setEntries(snapshot),
     });
   }
@@ -266,14 +288,24 @@ export function Dashboard() {
     if (categoryFilter !== "all") {
       result = result.filter((e) => e.activity.category === categoryFilter);
     }
+    if (sortOrder === "emissions") {
+      result = [...result].sort((a, b) => b.emissionsKgCo2e - a.emissionsKgCo2e);
+    } else if (sortOrder === "cost") {
+      result = [...result].sort(
+        (a, b) => estimateCostUsd(b.activity) - estimateCostUsd(a.activity),
+      );
+    }
     return result;
-  }, [recentEntries, searchQuery, categoryFilter]);
-
-  const showEstimator = baseline === null || retaking;
-  const hasSavedEstimate = baseline !== null && baseline.annualTonnes > 0;
+  }, [recentEntries, searchQuery, categoryFilter, sortOrder]);
 
   const hasEntries = entries.length > 0;
   const hasEnoughForInsights = entries.length >= MIN_ENTRIES_FOR_INSIGHTS;
+
+  // Value before friction: new visitors land on the logger and get their first
+  // number immediately. The baseline quiz appears only after that first log
+  // (or when explicitly retaking) — an upsell, not a gate.
+  const showEstimator = retaking || (baseline === null && hasEntries);
+  const hasSavedEstimate = baseline !== null && baseline.annualTonnes > 0;
 
   const simulatorBreakdown = hasEntries
     ? annualBreakdownFromEntries(categoryTotals, PERIOD_DAYS)
@@ -314,6 +346,34 @@ export function Dashboard() {
           </p>
         </div>
 
+        <FootprintSummary
+          totalKgCo2e={total}
+          periodDays={PERIOD_DAYS}
+          totalCostUsd={totalCostUsd}
+        />
+
+        {/* Primary action (log) and primary motivation (today's budget +
+            streak) share the top row — both above the fold. */}
+        <div className={gridRow}>
+          <section ref={loggerRef} aria-labelledby="logger-heading" className={cardClass}>
+            <h2 id="logger-heading" className="sr-only">
+              Log a new activity
+            </h2>
+            <ActivityLogger
+              onLog={handleLog}
+              prefill={prefill}
+            />
+          </section>
+
+          <GoalTracker
+            dailyBudgetKg={dailyBudgetKg}
+            onChangeBudget={setDailyBudgetKg}
+            todayKg={todayKg}
+            streak={streak}
+            achievements={achievements}
+          />
+        </div>
+
         {showEstimator ? (
           <BaselineEstimator
             onComplete={handleBaselineComplete}
@@ -344,34 +404,8 @@ export function Dashboard() {
           )
         )}
 
-        <FootprintSummary
-          totalKgCo2e={total}
-          periodDays={PERIOD_DAYS}
-          totalCostUsd={totalCostUsd}
-        />
-
         <div className={gridRow}>
-          <section ref={loggerRef} aria-labelledby="logger-heading" className={cardClass}>
-            <h2 id="logger-heading" className="sr-only">
-              Log a new activity
-            </h2>
-            <ActivityLogger
-              onLog={handleLog}
-              prefill={prefill}
-            />
-          </section>
-
           <ReceiptUpload onLogMany={handleLogMany} />
-        </div>
-
-        <div className={gridRow}>
-          <GoalTracker
-            dailyBudgetKg={dailyBudgetKg}
-            onChangeBudget={setDailyBudgetKg}
-            todayKg={todayKg}
-            streak={streak}
-            achievements={achievements}
-          />
 
           <CategoryBreakdown totals={categoryTotals} />
         </div>
@@ -383,17 +417,54 @@ export function Dashboard() {
           />
         )}
 
-        {/* Trend and coach panels are only meaningful with enough data points */}
-        {hasEnoughForInsights && (
-          <TrendChart data={trend} weeklyTargetKg={WEEKLY_TARGET_KG} />
-        )}
+        {/* Trend and coach panels are only meaningful with enough data points.
+            Until then, show a teaser so people know insights exist and how to
+            unlock them — silently hiding them reads as "the app is broken". */}
+        {hasEnoughForInsights ? (
+          <>
+            <TrendChart data={trend} weeklyTargetKg={WEEKLY_TARGET_KG} />
 
-        {hasEnoughForInsights && (
-          <CoachPanel
-            totalKgCo2e={total}
-            periodDays={PERIOD_DAYS}
-            topCategories={categoryTotals.slice(0, 5)}
-          />
+            <CoachPanel
+              totalKgCo2e={total}
+              periodDays={PERIOD_DAYS}
+              topCategories={categoryTotals.slice(0, 5)}
+            />
+          </>
+        ) : (
+          hasEntries && (
+            <div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50/60 p-8 text-center dark:border-stone-700 dark:bg-stone-900/40">
+              <LineChart
+                className="mx-auto h-10 w-10 text-stone-300 dark:text-stone-600"
+                aria-hidden="true"
+              />
+              <h3 className="mt-3 text-base font-semibold text-stone-900 dark:text-stone-50">
+                Unlock your trend chart &amp; AI coach
+              </h3>
+              <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
+                Log {MIN_ENTRIES_FOR_INSIGHTS - entries.length} more{" "}
+                {MIN_ENTRIES_FOR_INSIGHTS - entries.length === 1
+                  ? "activity"
+                  : "activities"}{" "}
+                to see your weekly emissions trend and personalized coaching.
+              </p>
+              <div
+                className="mt-4 flex justify-center gap-2"
+                role="img"
+                aria-label={`${entries.length} of ${MIN_ENTRIES_FOR_INSIGHTS} activities logged`}
+              >
+                {Array.from({ length: MIN_ENTRIES_FOR_INSIGHTS }, (_, i) => (
+                  <div
+                    key={i}
+                    className={`h-2 w-12 rounded-full ${
+                      i < entries.length
+                        ? "bg-emerald-500"
+                        : "bg-stone-200 dark:bg-stone-700"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          )
         )}
 
         {hasEntries ? (
@@ -420,7 +491,7 @@ export function Dashboard() {
           <div className="flex items-center justify-between gap-3">
             <h2
               id="recent-heading"
-              className="text-sm font-medium text-stone-500 dark:text-stone-400"
+              className="text-base font-semibold text-stone-900 dark:text-stone-50"
             >
               Recent activity
             </h2>
@@ -469,7 +540,7 @@ export function Dashboard() {
           </div>
 
           {recentEntries.length > 0 && (
-            <div className="flex gap-2">
+            <div className="flex flex-col gap-2 sm:flex-row">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400 dark:text-stone-500" aria-hidden="true" />
                 <input
@@ -484,7 +555,7 @@ export function Dashboard() {
                     type="button"
                     onClick={() => setSearchQuery("")}
                     aria-label="Clear search"
-                    className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded p-0.5 text-stone-400 hover:text-stone-600 dark:hover:text-stone-300"
+                    className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-stone-400 transition hover:bg-stone-100 hover:text-stone-600 dark:hover:bg-stone-800 dark:hover:text-stone-300"
                   >
                     <X className="h-4 w-4" aria-hidden="true" />
                   </button>
@@ -505,7 +576,29 @@ export function Dashboard() {
                   </option>
                 ))}
               </select>
+              <select
+                value={sortOrder}
+                onChange={(e) => setSortOrder(e.target.value as SortOrder)}
+                aria-label="Sort activities"
+                className="rounded-lg border border-stone-300 bg-white px-2.5 py-2 text-sm text-stone-700 outline-none transition focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200"
+              >
+                <option value="newest">Newest</option>
+                <option value="emissions">Highest CO₂e</option>
+                <option value="cost">Highest cost</option>
+              </select>
             </div>
+          )}
+
+          {/* Tell people (and screen readers) what the filters returned. */}
+          {recentEntries.length > 0 && isFiltered && (
+            <p
+              role="status"
+              aria-live="polite"
+              className="text-xs text-stone-500 dark:text-stone-400"
+            >
+              Showing {filteredEntries.length} of {recentEntries.length}{" "}
+              activities
+            </p>
           )}
 
           <ActivityList
