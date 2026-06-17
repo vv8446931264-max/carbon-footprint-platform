@@ -14,10 +14,14 @@
  * the default flat white-and-gray look.
  */
 :root {
-  --background: #fbfaf8; /* warm off-white, not pure #fff */
+  --background: #f8faf7; /* warm nature white */
   --foreground: #1c1917; /* stone-900 */
   --brand: #047857; /* emerald-700 */
   --brand-strong: #065f46; /* emerald-800 */
+  --brand-soft: #d1fae5; /* emerald-100 */
+  --organic-radius: 20px;
+  --shadow-soft: 0 4px 24px rgba(4, 120, 87, 0.07);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.06), 0 4px 16px rgba(0,0,0,0.04);
 }
 
 @theme inline {
@@ -28,10 +32,13 @@
 }
 
 .dark {
-  --background: #0c0a09; /* stone-950 */
-  --foreground: #f5f5f4; /* stone-100 */
+  --background: #0a0f0d; /* deep forest dark */
+  --foreground: #f0fdf4; /* green-50 tint */
   --brand: #34d399; /* emerald-400 */
   --brand-strong: #6ee7b7; /* emerald-300 */
+  --brand-soft: #064e3b; /* emerald-900 */
+  --shadow-soft: 0 4px 24px rgba(52, 211, 153, 0.05);
+  --shadow-card: 0 1px 3px rgba(0,0,0,0.3), 0 4px 16px rgba(0,0,0,0.2);
 }
 
 html {
@@ -41,20 +48,22 @@ html {
 body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), system-ui, sans-serif;
-  /*
-   * Subtle layered gradient backdrop — adds depth so content cards read as
-   * "lifted" surfaces instead of floating on a flat fill.
-   */
   background-color: var(--background);
+  /* Organic layered gradient — nature-inspired depth */
   background-image:
     radial-gradient(
-      60rem 60rem at 100% -10%,
-      color-mix(in oklab, var(--brand) 9%, transparent),
+      ellipse 80rem 60rem at 100% -5%,
+      color-mix(in oklab, var(--brand) 7%, transparent),
       transparent
     ),
     radial-gradient(
-      50rem 50rem at -10% 0%,
-      color-mix(in oklab, var(--brand) 6%, transparent),
+      ellipse 60rem 50rem at -5% 20%,
+      color-mix(in oklab, var(--brand) 5%, transparent),
+      transparent
+    ),
+    radial-gradient(
+      ellipse 40rem 40rem at 50% 100%,
+      color-mix(in oklab, var(--brand) 4%, transparent),
       transparent
     );
   background-attachment: fixed;
@@ -158,4 +167,34 @@ body {
 
 .animate-confetti-fall {
   animation: confetti-fall 1.8s ease-in forwards;
+}
+
+/* Fade-up entrance for sections */
+@keyframes fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-up {
+  animation: fade-up 0.4s ease-out both;
+}
+
+/* Organic pulse glow on brand elements */
+@keyframes glow-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 color-mix(in oklab, var(--brand) 30%, transparent);
+  }
+  50% {
+    box-shadow: 0 0 0 6px color-mix(in oklab, var(--brand) 0%, transparent);
+  }
+}
+
+.animate-glow-pulse {
+  animation: glow-pulse 2.5s ease-in-out infinite;
 }

@@ -120,19 +120,22 @@ export function ActivityLogger({ onLog, prefill }: ActivityLoggerProps) {
   return (
     <form
       onSubmit={handleSubmit}
-      className="flex flex-col gap-3"
+      className="flex flex-col gap-4"
       aria-describedby={statusId}
     >
       <label
         htmlFor={inputId}
-        className="flex items-center gap-2 text-sm font-medium text-stone-800 dark:text-stone-100"
+        className="flex items-center gap-2 text-sm font-semibold text-stone-800 dark:text-stone-100"
       >
-        <Sparkles
-          className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
-          aria-hidden="true"
-        />
+        <span className="flex h-6 w-6 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/60">
+          <Sparkles
+            className="h-3.5 w-3.5 text-emerald-700 dark:text-emerald-400"
+            aria-hidden="true"
+          />
+        </span>
         What did you do today?
       </label>
+
       <div className="flex flex-col gap-2 sm:flex-row">
         <div className="relative flex-1">
           <input
@@ -141,16 +144,16 @@ export function ActivityLogger({ onLog, prefill }: ActivityLoggerProps) {
             value={text}
             onChange={(event) => setText(event.target.value.slice(0, CHAR_LIMIT))}
             placeholder="e.g. drove 10 km to work"
-            className={`w-full rounded-lg border bg-white px-3 py-2 pr-14 text-sm text-stone-900 outline-none transition focus-visible:ring-2 dark:bg-stone-900 dark:text-stone-100 ${
+            className={`w-full rounded-[14px] border bg-white/80 px-4 py-3 pr-14 text-sm text-stone-900 outline-none backdrop-blur-sm transition-all duration-200 dark:bg-stone-800/60 dark:text-stone-100 ${
               isOverLimit
-                ? "border-rose-400 focus-visible:border-rose-500 focus-visible:ring-rose-500/40"
-                : "border-stone-300 focus-visible:border-emerald-500 focus-visible:ring-emerald-500/40 dark:border-stone-700"
+                ? "border-rose-300 shadow-sm shadow-rose-100 focus-visible:border-rose-400 focus-visible:ring-2 focus-visible:ring-rose-400/30 dark:border-rose-700 dark:shadow-rose-900/20"
+                : "border-stone-200 shadow-sm focus-visible:border-emerald-400 focus-visible:ring-2 focus-visible:ring-emerald-400/30 focus-visible:shadow-md focus-visible:shadow-emerald-100/50 dark:border-stone-700 dark:focus-visible:border-emerald-600 dark:focus-visible:shadow-emerald-900/20"
             }`}
           />
           {charCount > 0 && (
             <span
               aria-hidden="true"
-              className={`pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-xs tabular-nums ${
+              className={`pointer-events-none absolute right-3.5 top-1/2 -translate-y-1/2 text-xs tabular-nums ${
                 isOverLimit
                   ? "text-rose-500"
                   : isNearLimit
@@ -162,19 +165,21 @@ export function ActivityLogger({ onLog, prefill }: ActivityLoggerProps) {
             </span>
           )}
         </div>
+
         <button
           type="submit"
           disabled={status === "loading" || !text.trim() || isOverLimit}
-          className={`inline-flex items-center justify-center gap-1.5 rounded-lg px-4 py-2 text-sm font-semibold text-white shadow-sm transition focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50 ${
+          className={`inline-flex items-center justify-center gap-2 rounded-[14px] px-5 py-3 text-sm font-semibold text-white shadow-md transition-all duration-200 focus-visible:ring-2 focus-visible:ring-emerald-500 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 ${
             status === "success"
-              ? "bg-emerald-500 hover:bg-emerald-600"
-              : "bg-emerald-600 hover:bg-emerald-700"
+              ? "bg-emerald-500 shadow-emerald-500/30 hover:bg-emerald-600"
+              : "bg-gradient-to-b from-emerald-500 to-emerald-700 shadow-emerald-600/30 hover:from-emerald-500 hover:to-emerald-800 hover:shadow-lg hover:shadow-emerald-600/20 active:scale-[0.98]"
           }`}
         >
           {status === "loading" ? (
             <>
               <Leaf className="h-4 w-4 animate-pulse" aria-hidden="true" />
-              {LOADING_MESSAGES[loadingMsgIdx]}
+              <span className="hidden sm:inline">{LOADING_MESSAGES[loadingMsgIdx]}</span>
+              <span className="sm:hidden">Logging…</span>
             </>
           ) : status === "success" ? (
             <>
@@ -182,12 +187,15 @@ export function ActivityLogger({ onLog, prefill }: ActivityLoggerProps) {
               Logged!
             </>
           ) : (
-            "Log activity"
+            <>
+              <Leaf className="h-4 w-4" aria-hidden="true" />
+              Log activity
+            </>
           )}
         </button>
       </div>
 
-      {/* Example chips help people understand the input format at a glance. */}
+      {/* Example chips */}
       {status === "idle" && !text && (
         <div className="flex flex-wrap gap-1.5">
           {EXAMPLES.map((example) => (
@@ -195,7 +203,7 @@ export function ActivityLogger({ onLog, prefill }: ActivityLoggerProps) {
               key={example}
               type="button"
               onClick={() => setText(example)}
-              className="rounded-full border border-stone-200 bg-white px-2.5 py-1 text-xs text-stone-600 transition hover:border-emerald-300 hover:text-emerald-700 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-emerald-700 dark:hover:text-emerald-400"
+              className="rounded-full border border-stone-200/80 bg-white/70 px-3 py-1 text-xs font-medium text-stone-600 backdrop-blur-sm transition-all hover:border-emerald-300 hover:bg-emerald-50 hover:text-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-400 dark:border-stone-700 dark:bg-stone-800/50 dark:text-stone-400 dark:hover:border-emerald-700 dark:hover:bg-emerald-950/40 dark:hover:text-emerald-300"
             >
               {example}
             </button>
@@ -206,7 +214,7 @@ export function ActivityLogger({ onLog, prefill }: ActivityLoggerProps) {
       <p id={statusId} role="status" aria-live="polite" className="text-sm">
         {status === "loading" && (
           <span className="text-stone-500 dark:text-stone-400">
-            Estimating emissions…
+            {LOADING_MESSAGES[loadingMsgIdx]}
           </span>
         )}
         {status === "error" && (

@@ -93,83 +93,114 @@ export function FootprintSummary({
       )} tonnes CO2e per year. The Paris-aligned target is 2 tonnes; the urban India average is 4.5 tonnes.`
     : "Annual pace scale. The Paris-aligned target is 2 tonnes; the urban India average is 4.5 tonnes.";
 
+  const heroNumberColor = {
+    stone: "text-stone-700 dark:text-stone-300",
+    emerald: "text-emerald-700 dark:text-emerald-400",
+    amber: "text-amber-700 dark:text-amber-400",
+    rose: "text-rose-700 dark:text-rose-400",
+  }[tone];
+
+  const glowColor = {
+    stone: "",
+    emerald: "shadow-emerald-500/20",
+    amber: "shadow-amber-500/20",
+    rose: "shadow-rose-500/20",
+  }[tone];
+
   return (
     <section
       aria-labelledby="footprint-summary-heading"
-      className="relative overflow-hidden rounded-2xl border border-stone-200 bg-gradient-to-br from-white via-white to-emerald-50/60 p-6 shadow-sm dark:border-stone-800 dark:from-stone-900 dark:via-stone-900 dark:to-emerald-950/20 sm:p-7"
+      className="relative overflow-hidden rounded-[20px] border border-emerald-100/80 bg-gradient-to-br from-white via-emerald-50/30 to-white p-6 shadow-[var(--shadow-soft)] dark:border-emerald-900/30 dark:from-stone-900 dark:via-emerald-950/20 dark:to-stone-900 sm:p-8"
     >
-      <div className="flex items-center justify-between gap-3">
+      {/* Decorative organic blob — purely visual */}
+      <div
+        className="pointer-events-none absolute -right-16 -top-16 h-48 w-48 rounded-full bg-emerald-400/8 blur-3xl dark:bg-emerald-500/5"
+        aria-hidden="true"
+      />
+
+      <div className="flex items-start justify-between gap-3">
         <h2
           id="footprint-summary-heading"
-          className="text-base font-semibold text-stone-900 dark:text-stone-50"
+          className="text-sm font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400"
         >
           Your footprint · last {periodDays} day{periodDays === 1 ? "" : "s"}
         </h2>
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-800 dark:bg-emerald-500/10 dark:text-emerald-300">
-          <Target className="h-3.5 w-3.5" aria-hidden="true" />
+        <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200/70 bg-emerald-50 px-2.5 py-1 text-xs font-semibold text-emerald-800 dark:border-emerald-800/40 dark:bg-emerald-950/60 dark:text-emerald-300">
+          <Target className="h-3 w-3" aria-hidden="true" />
           Goal: 2 t/yr
         </span>
       </div>
 
-      <div className="mt-3 flex flex-wrap items-end gap-x-4 gap-y-1">
-        <span className="text-5xl font-bold tracking-tight tabular-nums text-stone-900 dark:text-stone-50">
+      {/* Hero number */}
+      <div className="mt-4 flex flex-wrap items-end gap-x-3 gap-y-1">
+        <span
+          className={`text-6xl font-extrabold tracking-tight tabular-nums transition-colors duration-300 sm:text-7xl ${heroNumberColor}`}
+        >
           {totalKgCo2e.toFixed(1)}
         </span>
-        <span className="pb-1 text-lg text-stone-500 dark:text-stone-400">
-          kg CO₂e
-        </span>
-        {totalCostUsd !== undefined && totalCostUsd > 0 && (
-          <span className="ml-auto pb-1 text-sm font-medium tabular-nums text-stone-500 dark:text-stone-400">
-            ≈ ${totalCostUsd.toFixed(2)} spent
+        <div className="flex flex-col pb-2">
+          <span className="text-base font-medium text-stone-500 dark:text-stone-400">
+            kg CO₂e
           </span>
-        )}
-      </div>
-
-      <div className="mt-5">
-        <div className="mb-2 flex items-baseline justify-between gap-2 text-xs text-stone-500 dark:text-stone-400">
-          <span>At this pace</span>
-          {hasData ? (
-            <span
-              className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-semibold tabular-nums ${paceChip}`}
-            >
-              ≈ {annualizedTonnes.toFixed(1)} t/yr
-            </span>
-          ) : (
-            <span className="text-stone-400 dark:text-stone-500">
-              awaiting your first log
+          {totalCostUsd !== undefined && totalCostUsd > 0 && (
+            <span className="text-xs font-medium tabular-nums text-stone-400 dark:text-stone-500">
+              ≈ ${totalCostUsd.toFixed(2)} spent
             </span>
           )}
         </div>
 
-        {/* You vs target vs average, on one scale. */}
+        {hasData && (
+          <span
+            className={`ml-auto inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-sm font-bold tabular-nums shadow-md ${glowColor} ${paceChip}`}
+          >
+            ≈ {annualizedTonnes.toFixed(1)} t/yr
+          </span>
+        )}
+      </div>
+
+      {/* Progress scale */}
+      <div className="mt-6">
+        {!hasData && (
+          <p className="mb-2 text-xs text-stone-400 dark:text-stone-500">
+            awaiting your first log
+          </p>
+        )}
+
         <div
-          className="relative h-3 w-full rounded-full bg-stone-100 dark:bg-stone-800"
+          className="relative h-4 w-full overflow-hidden rounded-full bg-stone-100 dark:bg-stone-800/80"
           role="img"
           aria-label={scaleLabel}
         >
           <div
-            className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-500 ${fillColor}`}
+            className={`absolute inset-y-0 left-0 rounded-full transition-[width] duration-700 ease-out ${fillColor}`}
             style={{ width: `${userPct}%` }}
+          />
+          {/* Subtle shine on the bar */}
+          <div
+            className="pointer-events-none absolute inset-y-0 left-0 right-1/2 rounded-full bg-white/20"
+            style={{ width: `${userPct * 0.5}%` }}
+            aria-hidden="true"
           />
           {/* Target marker (2 t) */}
           <div
-            className="absolute -inset-y-0.5 w-0.5 rounded bg-emerald-700 dark:bg-emerald-400"
+            className="absolute inset-y-0 w-0.5 rounded-full bg-emerald-700 dark:bg-emerald-400"
             style={{ left: `${targetPct}%` }}
             aria-hidden="true"
           />
-          {/* Global-average marker (4.7 t) */}
+          {/* India average marker */}
           <div
-            className="absolute -inset-y-0.5 w-0.5 rounded bg-stone-400 dark:bg-stone-500"
+            className="absolute inset-y-0 w-0.5 rounded-full bg-stone-400/70 dark:bg-stone-500"
             style={{ left: `${avgPct}%` }}
             aria-hidden="true"
           />
         </div>
+
         <div
-          className="relative mt-1.5 h-4 text-[10px] text-stone-500 dark:text-stone-400"
+          className="relative mt-2 h-4 text-[10px] font-medium text-stone-500 dark:text-stone-400"
           aria-hidden="true"
         >
           <span
-            className="absolute -translate-x-1/2 whitespace-nowrap font-medium text-emerald-700 dark:text-emerald-400"
+            className="absolute -translate-x-1/2 whitespace-nowrap text-emerald-700 dark:text-emerald-400"
             style={{ left: `${targetPct}%` }}
           >
             Target 2t
@@ -178,12 +209,13 @@ export function FootprintSummary({
             className="absolute -translate-x-1/2 whitespace-nowrap"
             style={{ left: `${avgPct}%` }}
           >
-            Urban India 4.5t
+            India avg 4.5t
           </span>
         </div>
       </div>
 
-      <p className="mt-4 flex items-start gap-2 text-sm text-stone-600 dark:text-stone-300">
+      {/* Context sentence */}
+      <p className="mt-5 flex items-start gap-2 rounded-xl bg-stone-50/80 px-4 py-3 text-sm text-stone-700 dark:bg-stone-800/50 dark:text-stone-300">
         {hasData &&
           (underTarget ? (
             <TrendingDown
@@ -192,7 +224,7 @@ export function FootprintSummary({
             />
           ) : (
             <TrendingUp
-              className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400"
+              className="mt-0.5 h-4 w-4 shrink-0 text-amber-500 dark:text-amber-400"
               aria-hidden="true"
             />
           ))}
@@ -200,8 +232,8 @@ export function FootprintSummary({
       </p>
 
       {hasData && (
-        <div className="mt-5">
-          <p className="mb-2 text-xs font-medium text-stone-500 dark:text-stone-400">
+        <div className="mt-5 border-t border-stone-100 pt-5 dark:border-stone-800">
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-stone-400 dark:text-stone-500">
             That&apos;s equivalent to…
           </p>
           <EmissionEquivalencies kgCo2e={totalKgCo2e} />

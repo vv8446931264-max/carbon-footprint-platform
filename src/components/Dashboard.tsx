@@ -74,7 +74,7 @@ interface ToastState {
 }
 
 const cardClass =
-  "rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900";
+  "rounded-[20px] border border-stone-100/80 bg-white/90 p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] backdrop-blur-sm dark:border-stone-800/60 dark:bg-stone-900/80";
 
 const gridRow = "grid gap-6 md:grid-cols-2";
 
@@ -325,15 +325,19 @@ export function Dashboard() {
       />
 
       <div className="flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-8">
-        <div>
-          <h1 className="text-2xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
-            Your carbon dashboard
+        <div className="animate-fade-up">
+          <h1 className="text-3xl font-extrabold tracking-tight text-stone-900 dark:text-emerald-50 sm:text-4xl">
+            Your{" "}
+            <span className="bg-gradient-to-r from-emerald-600 to-emerald-800 bg-clip-text text-transparent dark:from-emerald-300 dark:to-emerald-500">
+              carbon
+            </span>{" "}
+            dashboard
           </h1>
-          <p className="mt-1 max-w-2xl text-sm text-stone-600 dark:text-stone-400">
-            Log everyday activities in plain language, or scan a receipt, and
-            see a clear, personalized picture of your impact.
+          <p className="mt-2 max-w-2xl text-sm text-stone-600 dark:text-stone-400">
+            Log everyday activities in plain language, or scan a receipt — see a
+            clear, personalised picture of your impact in seconds.
           </p>
-          <p className="mt-2 max-w-2xl text-sm text-stone-500 dark:text-stone-400">
+          <p className="mt-2 max-w-2xl text-sm text-stone-500 dark:text-stone-500">
             India&apos;s urban households emit{" "}
             <span className="font-semibold text-amber-700 dark:text-amber-400">
               4–5 t CO₂e / year
