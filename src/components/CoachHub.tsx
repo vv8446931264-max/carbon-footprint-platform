@@ -355,7 +355,7 @@ export function CoachHub({
                         borderRadius: "8px",
                         fontSize: "12px",
                       }}
-                      formatter={(value: number, key: string) => [
+                      formatter={(value: number | undefined, key: string) => [
                         `${Number(value).toFixed(2)}t CO₂e`,
                         key === "current" ? "Current trajectory" : "With adopted swaps",
                       ]}
