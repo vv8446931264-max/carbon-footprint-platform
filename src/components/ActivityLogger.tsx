@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useId, useRef, useState } from "react";
+import { useEffect, useId, useLayoutEffect, useRef, useState } from "react";
 import { Check, Leaf, Sparkles } from "lucide-react";
 
 const LOADING_MESSAGES = [
@@ -43,10 +43,13 @@ export function ActivityLogger({ onLog, prefill }: ActivityLoggerProps) {
   const successTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const inputId = useId();
   const statusId = useId();
+  const prefillRef = useRef(prefill);
 
-  // Sync prefill when parent updates it (e.g. EmptyState chip click)
-  useEffect(() => {
-    if (prefill !== undefined) setText(prefill);
+  useLayoutEffect(() => {
+    if (prefill !== undefined && prefill !== prefillRef.current) {
+      setText(prefill);
+      prefillRef.current = prefill;
+    }
   }, [prefill]);
 
   // Rotate loading message every 1.5 s

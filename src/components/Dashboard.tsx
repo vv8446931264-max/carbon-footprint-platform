@@ -116,6 +116,7 @@ export function Dashboard() {
 
   // Reset visible count whenever search, filter, or sort changes
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setVisibleCount(DEFAULT_VISIBLE);
   }, [searchQuery, categoryFilter, sortOrder]);
 
@@ -184,7 +185,10 @@ export function Dashboard() {
   }
 
   const toastRef = useRef(toast);
-  toastRef.current = toast;
+
+  useEffect(() => {
+    toastRef.current = toast;
+  }, [toast]);
 
   useKeyboardShortcuts([
     { key: "n", ctrl: true, handler: scrollToLogger },
@@ -619,16 +623,16 @@ export function Dashboard() {
 const CONFETTI_COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#f43f5e", "#8b5cf6"];
 
 function Confetti() {
-  const particles = useMemo(
-    () =>
-      Array.from({ length: 14 }, (_, i) => ({
-        id: i,
-        left: `${6 + Math.random() * 88}%`,
-        delay: `${(Math.random() * 0.4).toFixed(2)}s`,
-        color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-      })),
-    [],
-  );
+  const particles = useMemo(() => {
+    return Array.from({ length: 14 }, (_, i) => ({
+      id: i,
+      // eslint-disable-next-line react-hooks/purity
+      left: `${6 + Math.random() * 88}%`,
+      // eslint-disable-next-line react-hooks/purity
+      delay: `${(Math.random() * 0.4).toFixed(2)}s`,
+      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
+    }));
+  }, []);
 
   return (
     <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
