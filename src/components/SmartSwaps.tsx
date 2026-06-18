@@ -44,12 +44,12 @@ export function SmartSwaps({ onApplySwap }: SmartSwapsProps) {
   return (
     <section
       aria-labelledby="swaps-heading"
-      className="rounded-[20px] border border-stone-100/80 bg-gradient-to-br from-white via-emerald-50/15 to-white p-6 shadow-[var(--shadow-soft)] dark:border-stone-800/60 dark:from-stone-900 dark:via-emerald-950/10 dark:to-stone-900 sm:p-8"
+      className="glass-card rounded-[20px] p-6 sm:p-8"
     >
       <div className="flex items-center justify-between">
         <h2
           id="swaps-heading"
-          className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400"
+          className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-stone-700 dark:text-stone-300"
         >
           <Zap className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
           Smart Swaps
@@ -59,7 +59,7 @@ export function SmartSwaps({ onApplySwap }: SmartSwapsProps) {
             type="button"
             onClick={prev}
             aria-label="Previous swaps"
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-stone-200/80 bg-white/80 text-stone-500 transition hover:border-emerald-300 hover:text-emerald-600 dark:border-stone-700 dark:bg-stone-800/60 dark:text-stone-400 dark:hover:border-emerald-700 dark:hover:text-emerald-400"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/50 bg-white/30 text-stone-600 backdrop-blur-sm transition hover:bg-white/50 hover:text-emerald-700 dark:border-white/15 dark:bg-white/8 dark:text-stone-300 dark:hover:bg-white/15"
           >
             <ChevronLeft className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -67,7 +67,7 @@ export function SmartSwaps({ onApplySwap }: SmartSwapsProps) {
             type="button"
             onClick={next}
             aria-label="Next swaps"
-            className="flex h-8 w-8 items-center justify-center rounded-full border border-stone-200/80 bg-white/80 text-stone-500 transition hover:border-emerald-300 hover:text-emerald-600 dark:border-stone-700 dark:bg-stone-800/60 dark:text-stone-400 dark:hover:border-emerald-700 dark:hover:text-emerald-400"
+            className="flex h-8 w-8 items-center justify-center rounded-full border border-white/50 bg-white/30 text-stone-600 backdrop-blur-sm transition hover:bg-white/50 hover:text-emerald-700 dark:border-white/15 dark:bg-white/8 dark:text-stone-300 dark:hover:bg-white/15"
           >
             <ChevronRight className="h-4 w-4" aria-hidden="true" />
           </button>
@@ -80,9 +80,9 @@ export function SmartSwaps({ onApplySwap }: SmartSwapsProps) {
           return (
             <div
               key={globalIdx}
-              className="flex flex-col gap-3 rounded-[16px] border border-stone-100/60 bg-white/70 p-4 backdrop-blur-sm transition hover:border-emerald-200/60 hover:shadow-sm dark:border-stone-800/40 dark:bg-stone-900/60"
+              className="flex flex-col items-center gap-3 rounded-[20px] border border-white/40 bg-white/25 p-5 text-center backdrop-blur-md transition-all duration-200 hover:scale-[1.02] hover:bg-white/40 hover:shadow-lg hover:shadow-emerald-500/10 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
             >
-              <span className="text-2xl" aria-hidden="true">{swap.icon}</span>
+              <span className="text-3xl" aria-hidden="true">{swap.icon}</span>
               <div className="flex flex-col gap-0.5">
                 <p className="font-semibold text-stone-900 dark:text-stone-50">
                   {swap.from} → {swap.to}
@@ -98,7 +98,7 @@ export function SmartSwaps({ onApplySwap }: SmartSwapsProps) {
                   setApplied((s) => new Set(s).add(globalIdx));
                   onApplySwap(swap.prefill);
                 }}
-                className="mt-auto rounded-[10px] border border-emerald-200 bg-emerald-50/80 px-3 py-1.5 text-xs font-semibold text-emerald-800 transition hover:bg-emerald-100 hover:shadow-sm disabled:cursor-default disabled:opacity-60 dark:border-emerald-800/40 dark:bg-emerald-950/50 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
+                className="mt-auto w-full rounded-full border border-white/60 bg-white/50 px-4 py-2 text-xs font-bold text-emerald-800 backdrop-blur-sm transition hover:bg-white/70 disabled:cursor-default disabled:opacity-60 dark:border-white/20 dark:bg-white/10 dark:text-emerald-300 dark:hover:bg-white/20"
               >
                 {isApplied ? "✓ Applied" : "Apply Swap"}
               </button>

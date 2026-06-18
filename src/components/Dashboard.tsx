@@ -74,8 +74,7 @@ interface ToastState {
   undo?: () => void;
 }
 
-const cardClass =
-  "rounded-[20px] border border-stone-100/80 bg-white/90 p-6 shadow-[0_1px_3px_rgba(0,0,0,0.06),0_4px_16px_rgba(0,0,0,0.04)] backdrop-blur-sm dark:border-stone-800/60 dark:bg-stone-900/80";
+const cardClass = "glass-card rounded-[24px] p-6 shadow-lg";
 
 const gridRow = "grid gap-6 md:grid-cols-2";
 
@@ -325,7 +324,7 @@ export function Dashboard() {
         achievementsTotal={allAchievements().length}
       />
 
-      <div className="flex w-full max-w-5xl flex-col gap-6 px-4 py-8 sm:px-8">
+      <div className="flex w-full max-w-6xl flex-col gap-6 rounded-[32px] border border-[var(--glass-border)] bg-[var(--glass-bg)] px-6 py-8 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] sm:px-10 sm:py-10">
         <div className="animate-fade-up">
           <h1 className="text-3xl font-extrabold tracking-tight text-stone-900 dark:text-emerald-50 sm:text-4xl">
             Your{" "}
@@ -433,15 +432,18 @@ export function Dashboard() {
         />
 
         {hasEnoughForInsights ? (
-          <>
-            <TrendChart data={trend} weeklyTargetKg={WEEKLY_TARGET_KG} />
-
-            <CoachPanel
-              totalKgCo2e={total}
-              periodDays={PERIOD_DAYS}
-              topCategories={categoryTotals.slice(0, 5)}
-            />
-          </>
+          <div className="grid gap-6 lg:grid-cols-5">
+            <div className="lg:col-span-3">
+              <CoachPanel
+                totalKgCo2e={total}
+                periodDays={PERIOD_DAYS}
+                topCategories={categoryTotals.slice(0, 5)}
+              />
+            </div>
+            <div className="lg:col-span-2">
+              <TrendChart data={trend} weeklyTargetKg={WEEKLY_TARGET_KG} />
+            </div>
+          </div>
         ) : (
           hasEntries && (
             <div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50/60 p-8 text-center dark:border-stone-700 dark:bg-stone-900/40">

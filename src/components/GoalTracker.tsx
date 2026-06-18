@@ -44,7 +44,7 @@ export function GoalTracker({
   return (
     <section
       aria-labelledby="goal-heading"
-      className="rounded-[20px] border border-stone-100/80 bg-gradient-to-br from-white via-emerald-50/20 to-white p-6 shadow-[var(--shadow-soft)] dark:border-stone-800/60 dark:from-stone-900 dark:via-emerald-950/10 dark:to-stone-900 sm:p-8"
+      className="glass-card rounded-[20px] p-6 sm:p-8"
     >
       <h2
         id="goal-heading"

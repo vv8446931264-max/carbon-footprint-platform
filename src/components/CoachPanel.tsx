@@ -64,7 +64,7 @@ export function CoachPanel({
   return (
     <section
       aria-labelledby="coach-heading"
-      className="rounded-[20px] border border-stone-100/80 bg-gradient-to-br from-white via-emerald-50/15 to-white p-6 shadow-[var(--shadow-soft)] dark:border-stone-800/60 dark:from-stone-900 dark:via-emerald-950/10 dark:to-stone-900 sm:p-8"
+      className="glass-card rounded-[20px] p-6 sm:p-8"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h2
@@ -96,11 +96,21 @@ export function CoachPanel({
 
       <div role="status" aria-live="polite" className="mt-6">
         {status === "loading" && (
-          <div className="flex flex-col gap-3 rounded-xl bg-stone-50/60 p-4 dark:bg-stone-800/30" aria-hidden="true">
-            <div className="h-3.5 w-full animate-pulse rounded-full bg-stone-200 dark:bg-stone-700" />
-            <div className="h-3.5 w-5/6 animate-pulse rounded-full bg-stone-200 dark:bg-stone-700" />
-            <div className="h-3.5 w-2/3 animate-pulse rounded-full bg-stone-200/70 dark:bg-stone-700/70" />
-          </div>
+          <>
+            <div className="mb-3">
+              <p className="mb-1.5 text-xs font-medium text-stone-500 dark:text-stone-400">
+                AI analysis in progress…
+              </p>
+              <div className="h-1.5 w-full overflow-hidden rounded-full bg-stone-200/60 dark:bg-stone-800/60">
+                <div className="h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 animate-ai-progress" />
+              </div>
+            </div>
+            <div className="flex flex-col gap-3 rounded-xl bg-stone-50/60 p-4 dark:bg-stone-800/30" aria-hidden="true">
+              <div className="h-3.5 w-full animate-pulse rounded-full bg-stone-200 dark:bg-stone-700" />
+              <div className="h-3.5 w-5/6 animate-pulse rounded-full bg-stone-200 dark:bg-stone-700" />
+              <div className="h-3.5 w-2/3 animate-pulse rounded-full bg-stone-200/70 dark:bg-stone-700/70" />
+            </div>
+          </>
         )}
 
         {status === "error" && (
