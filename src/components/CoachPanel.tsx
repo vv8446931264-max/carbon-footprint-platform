@@ -122,18 +122,27 @@ export function CoachPanel({
         )}
 
         {status === "idle" && report && (
-          <div className="flex flex-col gap-4 rounded-xl bg-emerald-50/60 p-4 dark:bg-emerald-950/20">
-            <p className="text-sm leading-relaxed text-stone-800 dark:text-stone-100">
+          <div className="flex flex-col gap-4 rounded-[16px] bg-emerald-800 p-5 dark:bg-emerald-900/90">
+            <div className="flex items-center gap-2">
+              <Sprout className="h-4 w-4 text-emerald-300" aria-hidden="true" />
+              <span className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
+                Vertex AI Analysis
+              </span>
+            </div>
+            <h3 className="text-base font-bold text-white">
+              Weekly Report
+            </h3>
+            <p className="text-sm leading-relaxed text-emerald-100">
               {report.summary}
             </p>
-            <p className="text-sm font-semibold text-emerald-700 dark:text-emerald-400">
+            <p className="text-sm font-semibold text-emerald-300">
               {report.encouragement}
             </p>
-            <ul className="flex flex-col gap-2 text-sm text-stone-700 dark:text-stone-300">
+            <ul className="flex flex-col gap-2 text-sm text-emerald-100">
               {report.tips.map((tip, index) => (
-                <li key={index} className="flex items-start gap-2.5 rounded-lg bg-white/60 px-3 py-2 dark:bg-stone-900/40">
+                <li key={index} className="flex items-start gap-2.5 rounded-lg bg-white/10 px-3 py-2">
                   <Sprout
-                    className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400"
+                    className="mt-0.5 h-4 w-4 shrink-0 text-emerald-300"
                     aria-hidden="true"
                   />
                   <span>{tip}</span>

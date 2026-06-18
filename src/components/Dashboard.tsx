@@ -57,6 +57,7 @@ import { Methodology } from "./Methodology";
 import { ReceiptUpload } from "./ReceiptUpload";
 import { ReductionSimulator } from "./ReductionSimulator";
 import { SiteFooter } from "./SiteFooter";
+import { SmartSwaps } from "./SmartSwaps";
 import { TrendChart } from "./TrendChart";
 import { Toast } from "./Toast";
 
@@ -424,6 +425,13 @@ export function Dashboard() {
         {/* Trend and coach panels are only meaningful with enough data points.
             Until then, show a teaser so people know insights exist and how to
             unlock them — silently hiding them reads as "the app is broken". */}
+        <SmartSwaps
+          onApplySwap={(prefill) => {
+            setPrefill(prefill);
+            scrollToLogger();
+          }}
+        />
+
         {hasEnoughForInsights ? (
           <>
             <TrendChart data={trend} weeklyTargetKg={WEEKLY_TARGET_KG} />
