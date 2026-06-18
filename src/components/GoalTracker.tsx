@@ -44,11 +44,11 @@ export function GoalTracker({
   return (
     <section
       aria-labelledby="goal-heading"
-      className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900"
+      className="rounded-[20px] border border-stone-100/80 bg-gradient-to-br from-white via-emerald-50/20 to-white p-6 shadow-[var(--shadow-soft)] dark:border-stone-800/60 dark:from-stone-900 dark:via-emerald-950/10 dark:to-stone-900 sm:p-8"
     >
       <h2
         id="goal-heading"
-        className="flex items-center gap-2 text-base font-semibold text-stone-900 dark:text-stone-50"
+        className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400"
       >
         <Gauge
           className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
@@ -57,24 +57,39 @@ export function GoalTracker({
         Daily carbon budget
       </h2>
 
-      <div className="mt-4 flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:justify-between">
-        <div className="flex items-center gap-4">
+      <div className="mt-6 flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-5">
+          {/* Enhanced SVG gauge with gradient background */}
           <svg
-            width="96"
-            height="96"
+            width="110"
+            height="110"
             viewBox="0 0 96 96"
             role="img"
             aria-label={`Today: ${todayKg.toFixed(1)} of ${dailyBudgetKg.toFixed(1)} kilograms CO2 equivalent budget, ${
               isOverBudget ? "over budget" : "within budget"
             }`}
+            className="drop-shadow-lg"
           >
+            <defs>
+              <linearGradient id="circleGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" stopColor="#059669" stopOpacity="0.3" />
+                <stop offset="100%" stopColor="#047857" stopOpacity="0.1" />
+              </linearGradient>
+            </defs>
             <circle
               cx="48"
               cy="48"
               r="40"
               fill="none"
               strokeWidth="8"
-              className="stroke-stone-200 dark:stroke-stone-800"
+              className="stroke-stone-100 dark:stroke-stone-800"
+            />
+            <circle
+              cx="48"
+              cy="48"
+              r="40"
+              fill="url(#circleGradient)"
+              fillOpacity="0.1"
             />
             <circle
               cx="48"
@@ -86,18 +101,18 @@ export function GoalTracker({
               transform="rotate(-90 48 48)"
               strokeDasharray={circumference}
               strokeDashoffset={dashOffset}
-              className={
+              className={`transition-[stroke-dashoffset] duration-700 ease-out ${
                 isOverBudget
-                  ? "stroke-amber-500"
-                  : "stroke-emerald-600 dark:stroke-emerald-400"
-              }
+                  ? "stroke-amber-500 drop-shadow-md drop-shadow-amber-500/20"
+                  : "stroke-emerald-500 drop-shadow-md drop-shadow-emerald-500/30 dark:stroke-emerald-400"
+              }`}
             />
             <text
               x="48"
               y="50"
               textAnchor="middle"
               dominantBaseline="middle"
-              className="fill-stone-900 text-[22px] font-bold dark:fill-stone-50"
+              className="fill-stone-900 text-[24px] font-extrabold dark:fill-emerald-50"
             >
               {todayKg.toFixed(1)}
             </text>
@@ -105,30 +120,36 @@ export function GoalTracker({
               x="48"
               y="66"
               textAnchor="middle"
-              className="fill-stone-500 text-[10px] dark:fill-stone-400"
+              className="fill-stone-500 text-[10px] font-medium dark:fill-stone-400"
             >
               of {dailyBudgetKg.toFixed(1)} kg
             </text>
           </svg>
 
-          <div>
-            <p className="text-sm text-stone-700 dark:text-stone-200">
+          <div className="flex flex-col gap-3">
+            <p className={`text-sm font-medium ${
+              isOverBudget
+                ? "text-amber-700 dark:text-amber-400"
+                : "text-emerald-700 dark:text-emerald-400"
+            }`}>
               {isOverBudget
-                ? "Over today's budget. Tomorrow is a fresh start."
-                : "Within today's budget. Nice pace!"}
+                ? "🎯 Over budget — tomorrow's a reset"
+                : "✨ Within budget — great pace!"}
             </p>
-            <p className="mt-1 flex items-center gap-1.5 text-sm font-medium text-emerald-700 dark:text-emerald-400">
-              <Flame className="h-4 w-4" aria-hidden="true" />
-              {streak} day streak
-            </p>
+            <div className="inline-flex items-center gap-2 rounded-full border border-amber-200/70 bg-amber-50/80 px-3 py-1.5 dark:border-amber-800/40 dark:bg-amber-950/50">
+              <Flame className="h-4 w-4 animate-pulse text-amber-600 dark:text-amber-400" aria-hidden="true" />
+              <span className="font-bold text-amber-900 dark:text-amber-200">
+                {streak}-day streak
+              </span>
+            </div>
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex items-end gap-2">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:items-end">
           <div className="flex flex-col gap-1">
             <label
               htmlFor={inputId}
-              className="text-xs font-medium text-stone-600 dark:text-stone-300"
+              className="text-xs font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400"
             >
               Daily goal (kg CO₂e)
             </label>
@@ -139,30 +160,30 @@ export function GoalTracker({
               step="0.1"
               value={draft}
               onChange={(event) => setDraft(event.target.value)}
-              className="w-28 rounded-lg border border-stone-300 bg-white px-2 py-1.5 text-sm text-stone-900 outline-none focus-visible:ring-2 focus-visible:ring-emerald-500 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+              className="w-32 rounded-[12px] border border-stone-200 bg-white/80 px-3 py-2 text-sm font-semibold text-stone-900 backdrop-blur-sm outline-none transition-all focus-visible:border-emerald-400 focus-visible:ring-2 focus-visible:ring-emerald-400/30 focus-visible:shadow-md focus-visible:shadow-emerald-100/50 dark:border-stone-700 dark:bg-stone-800/60 dark:text-stone-100"
             />
           </div>
           <button
             type="submit"
-            className="rounded-lg bg-emerald-600 px-3 py-1.5 text-sm font-semibold text-white transition hover:bg-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-500"
+            className="rounded-[12px] bg-gradient-to-b from-emerald-500 to-emerald-700 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition-all hover:shadow-lg hover:shadow-emerald-600/30 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-emerald-500"
           >
-            Save
+            Save goal
           </button>
         </form>
       </div>
 
       {achievements.length > 0 && (
         <ul
-          className="mt-5 flex flex-wrap gap-2"
+          className="mt-6 flex flex-wrap gap-2"
           aria-label="Unlocked achievements"
         >
           {achievements.map((achievement) => (
             <li
               key={achievement.id}
               title={achievement.description}
-              className="flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-medium text-emerald-900 dark:bg-emerald-500/10 dark:text-emerald-200"
+              className="flex items-center gap-1.5 rounded-full border border-emerald-200/70 bg-emerald-50/80 px-3 py-1.5 text-xs font-semibold text-emerald-900 transition-all hover:bg-emerald-100 hover:shadow-sm dark:border-emerald-800/40 dark:bg-emerald-950/50 dark:text-emerald-300 dark:hover:bg-emerald-900/50"
             >
-              <span aria-hidden="true">{achievement.icon}</span>
+              <span aria-hidden="true" className="text-sm">{achievement.icon}</span>
               {achievement.title}
             </li>
           ))}
