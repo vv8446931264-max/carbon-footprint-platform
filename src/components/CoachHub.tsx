@@ -22,17 +22,16 @@ import type { CategoryTotal } from "@/lib/emissions/aggregate";
 import type { CoachReport } from "@/types/ai";
 
 const SWAPS = [
-  { icon: "🥩", from: "Beef", to: "Lentils", savingKg: 5.0, unit: "per meal", prefill: "chose lentils instead of beef for dinner" },
-  { icon: "🚗", from: "Car", to: "Bike", savingKg: 2.0, unit: "per trip", prefill: "cycled to work instead of driving" },
-  { icon: "🌀", from: "Tumble Dryer", to: "Air Dry", savingKg: 1.5, unit: "per load", prefill: "air-dried laundry instead of using the tumble dryer" },
-  { icon: "🥛", from: "Dairy milk", to: "Oat milk", savingKg: 0.6, unit: "per litre", prefill: "switched to oat milk instead of dairy milk" },
-  { icon: "🍔", from: "Burger", to: "Veggie", savingKg: 2.5, unit: "per meal", prefill: "chose veggie burger instead of beef burger" },
-  { icon: "✈️", from: "Short flight", to: "Train", savingKg: 80.0, unit: "per trip", prefill: "took the train instead of flying" },
+  { icon: "🥘", from: "Mutton curry", to: "Paneer curry", savingKg: 4.0, unit: "per meal", prefill: "chose paneer curry instead of mutton for dinner" },
+  { icon: "🚗", from: "Car", to: "Auto/Bus", savingKg: 2.5, unit: "per trip", prefill: "took public transport instead of driving" },
+  { icon: "🌀", from: "Tumble dryer", to: "Line dry", savingKg: 1.5, unit: "per load", prefill: "air-dried clothes instead of using tumble dryer" },
+  { icon: "🥛", from: "Buffalo milk", to: "Plant milk", savingKg: 0.8, unit: "per litre", prefill: "switched to plant-based milk instead of dairy" },
+  { icon: "🍛", from: "Chicken biryani", to: "Veg biryani", savingKg: 3.0, unit: "per meal", prefill: "chose vegetable biryani instead of chicken" },
+  { icon: "✈️", from: "Flight", to: "Train", savingKg: 80.0, unit: "per trip", prefill: "took the train instead of flying" },
 ];
 
 const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
 const SWAP_REDUCTION = 0.40;
-const SWAPS_PER_PAGE = 3;
 
 interface CoachHubProps {
   totalKgCo2e: number;
