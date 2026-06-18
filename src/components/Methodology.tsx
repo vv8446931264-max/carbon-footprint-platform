@@ -11,7 +11,7 @@ import { BookOpen } from "lucide-react";
  */
 export function Methodology() {
   return (
-    <details className="group rounded-2xl border border-stone-200 bg-white/70 p-5 dark:border-stone-800 dark:bg-stone-900/60">
+    <details open className="group rounded-2xl border border-stone-200 bg-white/70 p-5 dark:border-stone-800 dark:bg-stone-900/60 h-full">
       <summary className="flex cursor-pointer items-center gap-2 text-sm font-medium text-stone-700 marker:content-none dark:text-stone-200">
         <BookOpen
           className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
