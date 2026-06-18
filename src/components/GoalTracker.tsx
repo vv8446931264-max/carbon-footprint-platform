@@ -57,7 +57,7 @@ export function GoalTracker({
         Daily carbon budget
       </h2>
 
-      <div className="mt-6 flex flex-col items-center gap-6 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mt-6 flex flex-col items-center gap-6 lg:flex-row lg:items-center lg:justify-between">
         <div className="flex items-center gap-5">
           {/* Enhanced SVG gauge with gradient background */}
           <svg
@@ -145,7 +145,7 @@ export function GoalTracker({
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="flex flex-col gap-3 sm:items-end">
+        <form onSubmit={handleSubmit} className="flex flex-col gap-3 lg:items-end">
           <div className="flex flex-col gap-1">
             <label
               htmlFor={inputId}

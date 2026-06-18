@@ -5,7 +5,6 @@ import {
   Compass,
   Download,
   Keyboard,
-  LineChart,
   Search,
   Trash2,
   X,
@@ -16,10 +15,8 @@ import {
   totalEmissions,
   totalsByCategory,
 } from "@/lib/emissions/aggregate";
-import { PARIS_ALIGNED_DAILY_KG } from "@/lib/emissions/calculate";
 import { suggestSwap } from "@/lib/emissions/compare";
 import { estimateCostUsd } from "@/lib/emissions/cost";
-import { weeklyTrend } from "@/lib/emissions/trend";
 import { localDayKey } from "@/lib/dates/localDay";
 import {
   allAchievements,
@@ -48,7 +45,7 @@ import { ActivityList } from "./ActivityList";
 import { AppHeader } from "./AppHeader";
 import { BaselineEstimator } from "./BaselineEstimator";
 import { CategoryBreakdown } from "./CategoryBreakdown";
-import { CoachPanel } from "./CoachPanel";
+import { CoachHub } from "./CoachHub";
 import { FloatingActionButton } from "./FloatingActionButton";
 import { FootprintSummary } from "./FootprintSummary";
 import { GoalTracker } from "./GoalTracker";
@@ -57,15 +54,9 @@ import { Methodology } from "./Methodology";
 import { ReceiptUpload } from "./ReceiptUpload";
 import { ReductionSimulator } from "./ReductionSimulator";
 import { SiteFooter } from "./SiteFooter";
-import { SmartSwaps } from "./SmartSwaps";
-import { TrendChart } from "./TrendChart";
 import { Toast } from "./Toast";
 
 const PERIOD_DAYS = 30;
-const TREND_WEEKS = 8;
-const WEEKLY_TARGET_KG = PARIS_ALIGNED_DAILY_KG * 7;
-// Trend and coach panels need enough data points to be meaningful
-const MIN_ENTRIES_FOR_INSIGHTS = 3;
 // How many activities to show before "Show more"
 const DEFAULT_VISIBLE = 5;
 
@@ -76,7 +67,7 @@ interface ToastState {
 
 const cardClass = "glass-card rounded-[24px] p-6 shadow-lg";
 
-const gridRow = "grid gap-6 md:grid-cols-2";
+const gridRow = "grid gap-5 md:grid-cols-2";
 
 const ALL_CATEGORIES = Object.keys(CATEGORY_VISUALS) as ActivityCategory[];
 
@@ -231,7 +222,6 @@ export function Dashboard() {
     total,
     totalCostUsd,
     categoryTotals,
-    trend,
     todayKg,
     streak,
     achievements,
@@ -247,7 +237,6 @@ export function Dashboard() {
         ) * 100,
       ) / 100;
     const categories = totalsByCategory(recent);
-    const weeklyData = weeklyTrend(entries, TREND_WEEKS);
 
     const todayKey = localDayKey(new Date());
     const dayTotal =
@@ -271,7 +260,6 @@ export function Dashboard() {
       total: sum,
       totalCostUsd: cost,
       categoryTotals: categories,
-      trend: weeklyData,
       todayKg: dayTotal,
       streak: currentStreakVal,
       achievements: unlocked,
@@ -299,7 +287,6 @@ export function Dashboard() {
   }, [recentEntries, searchQuery, categoryFilter, sortOrder]);
 
   const hasEntries = entries.length > 0;
-  const hasEnoughForInsights = entries.length >= MIN_ENTRIES_FOR_INSIGHTS;
 
   // Value before friction: new visitors land on the logger and get their first
   // number immediately. The baseline quiz appears only after that first log
@@ -324,7 +311,7 @@ export function Dashboard() {
         achievementsTotal={allAchievements().length}
       />
 
-      <div className="flex w-full max-w-6xl flex-col gap-6 rounded-[32px] border border-[var(--glass-border)] bg-[var(--glass-bg)] px-6 py-8 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] sm:px-10 sm:py-10">
+      <div className="flex w-full max-w-7xl flex-col gap-5 rounded-[32px] border border-[var(--glass-border)] bg-[var(--glass-bg)] px-6 py-8 backdrop-blur-xl shadow-[0_8px_32px_rgba(0,0,0,0.06)] sm:px-10 sm:py-10">
         <div className="animate-fade-up">
           <h1 className="text-3xl font-extrabold tracking-tight text-stone-900 dark:text-emerald-50 sm:text-4xl">
             Your{" "}
@@ -350,25 +337,13 @@ export function Dashboard() {
           </p>
         </div>
 
-        <FootprintSummary
-          totalKgCo2e={total}
-          periodDays={PERIOD_DAYS}
-          totalCostUsd={totalCostUsd}
-        />
-
-        {/* Primary action (log) and primary motivation (today's budget +
-            streak) share the top row — both above the fold. */}
-        <div className={gridRow}>
-          <section ref={loggerRef} aria-labelledby="logger-heading" className={cardClass}>
-            <h2 id="logger-heading" className="sr-only">
-              Log a new activity
-            </h2>
-            <ActivityLogger
-              onLog={handleLog}
-              prefill={prefill}
-            />
-          </section>
-
+        {/* ROW 1: Hero metrics — Summary + Goal side-by-side above the fold */}
+        <div className="grid gap-5 md:grid-cols-2">
+          <FootprintSummary
+            totalKgCo2e={total}
+            periodDays={PERIOD_DAYS}
+            totalCostUsd={totalCostUsd}
+          />
           <GoalTracker
             dailyBudgetKg={dailyBudgetKg}
             onChangeBudget={setDailyBudgetKg}
@@ -377,6 +352,17 @@ export function Dashboard() {
             achievements={achievements}
           />
         </div>
+
+        {/* ROW 2: Primary action — Logger full-width */}
+        <section ref={loggerRef} aria-labelledby="logger-heading" className={cardClass}>
+          <h2 id="logger-heading" className="sr-only">
+            Log a new activity
+          </h2>
+          <ActivityLogger
+            onLog={handleLog}
+            prefill={prefill}
+          />
+        </section>
 
         {showEstimator ? (
           <BaselineEstimator
@@ -421,65 +407,16 @@ export function Dashboard() {
           />
         )}
 
-        {/* Trend and coach panels are only meaningful with enough data points.
-            Until then, show a teaser so people know insights exist and how to
-            unlock them — silently hiding them reads as "the app is broken". */}
-        <SmartSwaps
+        <CoachHub
+          totalKgCo2e={total}
+          periodDays={PERIOD_DAYS}
+          topCategories={categoryTotals.slice(0, 5)}
+          hasEntries={hasEntries}
           onApplySwap={(prefill) => {
             setPrefill(prefill);
             scrollToLogger();
           }}
         />
-
-        {hasEnoughForInsights ? (
-          <div className="grid gap-6 lg:grid-cols-5">
-            <div className="lg:col-span-3">
-              <CoachPanel
-                totalKgCo2e={total}
-                periodDays={PERIOD_DAYS}
-                topCategories={categoryTotals.slice(0, 5)}
-              />
-            </div>
-            <div className="lg:col-span-2">
-              <TrendChart data={trend} weeklyTargetKg={WEEKLY_TARGET_KG} />
-            </div>
-          </div>
-        ) : (
-          hasEntries && (
-            <div className="rounded-2xl border border-dashed border-stone-300 bg-stone-50/60 p-8 text-center dark:border-stone-700 dark:bg-stone-900/40">
-              <LineChart
-                className="mx-auto h-10 w-10 text-stone-300 dark:text-stone-600"
-                aria-hidden="true"
-              />
-              <h3 className="mt-3 text-base font-semibold text-stone-900 dark:text-stone-50">
-                Unlock your trend chart &amp; AI coach
-              </h3>
-              <p className="mt-1 text-sm text-stone-600 dark:text-stone-400">
-                Log {MIN_ENTRIES_FOR_INSIGHTS - entries.length} more{" "}
-                {MIN_ENTRIES_FOR_INSIGHTS - entries.length === 1
-                  ? "activity"
-                  : "activities"}{" "}
-                to see your weekly emissions trend and personalized coaching.
-              </p>
-              <div
-                className="mt-4 flex justify-center gap-2"
-                role="img"
-                aria-label={`${entries.length} of ${MIN_ENTRIES_FOR_INSIGHTS} activities logged`}
-              >
-                {Array.from({ length: MIN_ENTRIES_FOR_INSIGHTS }, (_, i) => (
-                  <div
-                    key={i}
-                    className={`h-2 w-12 rounded-full ${
-                      i < entries.length
-                        ? "bg-emerald-500"
-                        : "bg-stone-200 dark:bg-stone-700"
-                    }`}
-                  />
-                ))}
-              </div>
-            </div>
-          )
-        )}
 
         {hasEntries ? (
           <div className={gridRow}>
@@ -562,7 +499,7 @@ export function Dashboard() {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   placeholder="Search activities…"
-                  className="w-full rounded-lg border border-stone-300 bg-white py-2 pl-9 pr-9 text-sm outline-none transition focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100"
+                  className="w-full rounded-lg border border-white/40 bg-white/60 py-2 pl-9 pr-9 text-sm outline-none backdrop-blur-sm transition focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-white/15 dark:bg-white/10 dark:text-stone-100"
                 />
                 {searchQuery && (
                   <button
@@ -581,7 +518,7 @@ export function Dashboard() {
                   setCategoryFilter(e.target.value as "all" | ActivityCategory)
                 }
                 aria-label="Filter by category"
-                className="rounded-lg border border-stone-300 bg-white px-2.5 py-2 text-sm text-stone-700 outline-none transition focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200"
+                className="rounded-lg border border-white/40 bg-white/60 px-2.5 py-2 text-sm text-stone-700 outline-none backdrop-blur-sm transition focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-white/15 dark:bg-white/10 dark:text-stone-200"
               >
                 <option value="all">All</option>
                 {ALL_CATEGORIES.map((cat) => (
@@ -594,7 +531,7 @@ export function Dashboard() {
                 value={sortOrder}
                 onChange={(e) => setSortOrder(e.target.value as SortOrder)}
                 aria-label="Sort activities"
-                className="rounded-lg border border-stone-300 bg-white px-2.5 py-2 text-sm text-stone-700 outline-none transition focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-200"
+                className="rounded-lg border border-white/40 bg-white/60 px-2.5 py-2 text-sm text-stone-700 outline-none backdrop-blur-sm transition focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-white/15 dark:bg-white/10 dark:text-stone-200"
               >
                 <option value="newest">Newest</option>
                 <option value="emissions">Highest CO₂e</option>
@@ -615,28 +552,30 @@ export function Dashboard() {
             </p>
           )}
 
-          <ActivityList
-            entries={visibleEntries}
-            onDelete={handleDelete}
-            onSelectExample={(text) => {
-              setPrefill(text);
-              scrollToLogger();
-            }}
-            isFiltered={isFiltered}
-          />
+          <div className={filteredEntries.length > 6 ? "max-h-[28rem] overflow-y-auto overscroll-contain rounded-xl" : undefined}>
+            <ActivityList
+              entries={visibleEntries}
+              onDelete={handleDelete}
+              onSelectExample={(text) => {
+                setPrefill(text);
+                scrollToLogger();
+              }}
+              isFiltered={isFiltered}
+            />
 
-          {remainingCount > 0 && (
-            <button
-              type="button"
-              onClick={() => setVisibleCount((n) => n + DEFAULT_VISIBLE)}
-              className="mt-1 w-full rounded-xl border border-stone-200 bg-white py-2.5 text-sm font-medium text-stone-600 transition hover:border-emerald-300 hover:text-emerald-700 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300 dark:hover:border-emerald-700 dark:hover:text-emerald-400"
-            >
-              Show {Math.min(remainingCount, DEFAULT_VISIBLE)} more
-              <span className="ml-1 text-stone-400 dark:text-stone-500">
-                ({remainingCount} remaining)
-              </span>
-            </button>
-          )}
+            {remainingCount > 0 && (
+              <button
+                type="button"
+                onClick={() => setVisibleCount((n) => n + DEFAULT_VISIBLE)}
+                className="mt-1 w-full rounded-xl border border-white/30 bg-white/20 py-2.5 text-sm font-medium text-stone-700 backdrop-blur-sm transition hover:bg-white/40 hover:border-emerald-300 hover:text-emerald-700 dark:border-white/15 dark:bg-white/8 dark:text-stone-300 dark:hover:border-emerald-700 dark:hover:text-emerald-400"
+              >
+                Show {Math.min(remainingCount, DEFAULT_VISIBLE)} more
+                <span className="ml-1 text-stone-400 dark:text-stone-500">
+                  ({remainingCount} remaining)
+                </span>
+              </button>
+            )}
+          </div>
         </section>
       </div>
 

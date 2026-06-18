@@ -90,7 +90,7 @@ function TrendChartComponent({ data, weeklyTargetKg }: TrendChartProps) {
   return (
     <section
       aria-labelledby="trend-heading"
-      className="glass-card rounded-[20px] p-6 sm:p-8"
+      className="glass-card rounded-[20px] p-6 sm:p-8 flex-1"
     >
       <h2
         id="trend-heading"
