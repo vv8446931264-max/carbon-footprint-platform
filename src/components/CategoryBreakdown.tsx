@@ -36,11 +36,11 @@ function CategoryBreakdownComponent({ totals }: CategoryBreakdownProps) {
   return (
     <section
       aria-labelledby="breakdown-heading"
-      className="rounded-2xl border border-stone-200 bg-white p-6 shadow-sm dark:border-stone-800 dark:bg-stone-900"
+      className="rounded-[20px] border border-stone-100/80 bg-gradient-to-br from-white via-emerald-50/15 to-white p-6 shadow-[var(--shadow-soft)] dark:border-stone-800/60 dark:from-stone-900 dark:via-emerald-950/10 dark:to-stone-900 sm:p-8"
     >
       <h2
         id="breakdown-heading"
-        className="flex items-center gap-2 text-base font-semibold text-stone-900 dark:text-stone-50"
+        className="flex items-center gap-2 text-sm font-semibold uppercase tracking-wider text-stone-500 dark:text-stone-400"
       >
         <BarChart3
           className="h-4 w-4 text-emerald-600 dark:text-emerald-400"
@@ -50,38 +50,53 @@ function CategoryBreakdownComponent({ totals }: CategoryBreakdownProps) {
       </h2>
 
       {totals.length === 0 ? (
-        <p className="mt-4 text-sm text-stone-500 dark:text-stone-400">
-          No activities logged yet. Add one above to see your breakdown.
-        </p>
+        <div className="mt-6 rounded-xl bg-stone-50/60 p-4 dark:bg-stone-800/30">
+          <p className="text-sm text-stone-600 dark:text-stone-400">
+            📊 No activities logged yet. Add one above to see your breakdown.
+          </p>
+        </div>
       ) : (
         <>
           <div
-            className="mt-4 h-64"
+            className="mt-6 h-64 rounded-xl bg-gradient-to-b from-emerald-50/30 to-white p-3 dark:from-emerald-950/20 dark:to-stone-900/50"
             role="img"
             aria-label={describeChart(totals)}
           >
             <ResponsiveContainer width="100%" height="100%">
               <BarChart data={data} layout="vertical" margin={{ left: 16 }}>
                 <CartesianGrid
-                  strokeDasharray="3 3"
+                  strokeDasharray="4 4"
                   horizontal={false}
-                  className="stroke-stone-200 dark:stroke-stone-800"
+                  className="stroke-stone-200/40 dark:stroke-stone-700/40"
+                  strokeOpacity={0.3}
                 />
-                <XAxis type="number" tick={{ fontSize: 12 }} unit=" kg" />
+                <XAxis
+                  type="number"
+                  tick={{ fontSize: 12, fill: "#64748b" }}
+                  unit=" kg"
+                  axisLine={{ stroke: "#e2e8f0", strokeOpacity: 0.3 }}
+                />
                 <YAxis
                   type="category"
                   dataKey="name"
-                  tick={{ fontSize: 12 }}
+                  tick={{ fontSize: 12, fill: "#64748b" }}
                   width={80}
+                  axisLine={{ stroke: "#e2e8f0", strokeOpacity: 0.3 }}
                 />
                 <Tooltip
-                  cursor={{ fill: "rgba(120,113,108,0.08)" }}
+                  cursor={{ fill: "rgba(16,185,129,0.06)" }}
+                  contentStyle={{
+                    backgroundColor: "rgba(255, 255, 255, 0.95)",
+                    border: "1px solid #e5e7eb",
+                    borderRadius: "10px",
+                    boxShadow: "0 4px 16px rgba(0,0,0,0.08)",
+                  }}
                   formatter={(value) => [
                     `${Number(value).toFixed(1)} kg CO₂e`,
                     "Emissions",
                   ]}
                 />
-                <Bar dataKey="kg" radius={[0, 4, 4, 0]}>
+                <Bar dataKey="kg" radius={[0, 6, 6, 0]}>
                   {data.map((entry) => (
                     <Cell key={entry.name} fill={entry.color} />
                   ))}
