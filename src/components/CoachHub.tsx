@@ -355,10 +355,10 @@ export function CoachHub({
                         borderRadius: "8px",
                         fontSize: "12px",
                       }}
-                      formatter={(value: number | undefined, key: string) => [
+                      formatter={(value, name) => [
                         `${Number(value).toFixed(2)}t CO₂e`,
-                        key === "current" ? "Current trajectory" : "With adopted swaps",
-                      ]}
+                        name === "current" ? "Current trajectory" : "With adopted swaps",
+                      ] as [string, string]}
                     />
                     <ReferenceLine
                       y={2}
