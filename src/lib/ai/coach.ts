@@ -50,6 +50,17 @@ export async function generateCoachReport(
     );
   }
 
+  if (input.totalKgCo2e === 0 || input.topCategories.length === 0) {
+    return {
+      summary: "You haven't logged any activities yet. Once you start tracking, I'll give you a personalized report comparing your pace to the 2 tonnes/year Paris target.",
+      encouragement: "Log your first activity to get started. Even small steps matter!",
+      tips: [
+        "Try logging a commute: 'drove 15 km to office' or 'took the metro 10 km'",
+        "Log a meal: 'had chicken biryani for lunch' or 'cooked dal rice at home'",
+      ],
+    };
+  }
+
   const totalCategories = input.topCategories.reduce((s, c) => s + c.kgCo2e, 0);
   const categorySummary = input.topCategories
     .map((entry) => {
