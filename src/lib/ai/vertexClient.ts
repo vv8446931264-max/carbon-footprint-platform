@@ -108,6 +108,10 @@ export async function generateText(
         config: {
           temperature: options.temperature ?? 0.2,
           maxOutputTokens: 1024,
+          // Force the model to emit raw JSON — prevents gemini-2.5-flash from
+          // wrapping output in markdown fences or prose, and stops thinking-mode
+          // <think> blocks from appearing before the JSON payload.
+          responseMimeType: "application/json",
           ...(systemInstruction
             ? {
                 systemInstruction: {
@@ -172,6 +176,9 @@ export async function generateFromImage(
       config: {
         temperature: 0.1,
         maxOutputTokens: 2048,
+        // Force raw JSON output — same fix as generateText: prevents <think>
+        // blocks and markdown fences from wrapping the structured response.
+        responseMimeType: "application/json",
         ...(systemInstruction
           ? {
               systemInstruction: {
@@ -198,10 +205,17 @@ export async function generateFromImage(
  * Extracts the first valid JSON object/array from a model response.
  * Models occasionally wrap JSON in markdown fences or prose — this
  * guards against that without trusting the output blindly.
+ *
+ * Also strips <think>/<thinking> blocks emitted by gemini-2.5-flash
+ * thinking mode before attempting extraction.
  */
 export function extractJson(rawText: string): unknown {
-  const fencedMatch = rawText.match(/```(?:json)?\s*([\s\S]*?)```/i);
-  const candidate = fencedMatch ? fencedMatch[1] : rawText;
+  // Strip thinking-mode tags that gemini-2.5-flash prepends before the answer.
+  // These look like <think>...</think> or <thinking>...</thinking>.
+  const stripped = rawText.replace(/<think(?:ing)?>[\s\S]*?<\/think(?:ing)?>/gi, "").trim();
+
+  const fencedMatch = stripped.match(/```(?:json)?\s*([\s\S]*?)```/i);
+  const candidate = fencedMatch ? fencedMatch[1] : stripped;
 
   const start = Math.min(
     ...["{", "["].map((token) => {
