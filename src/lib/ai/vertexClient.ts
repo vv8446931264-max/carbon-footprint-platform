@@ -1,4 +1,5 @@
 import { GoogleGenAI } from "@google/genai";
+import { writeFileSync } from "fs";
 import { createTtlCache } from "./cache";
 
 /**
@@ -7,6 +8,21 @@ import { createTtlCache } from "./cache";
  * and avoids requiring GCP credentials for routes that don't need them).
  */
 let cachedClient: GoogleGenAI | null = null;
+
+function setupCredentials() {
+  // On Vercel, credentials are provided as base64-encoded env var
+  const credsB64 = process.env.GOOGLE_APPLICATION_CREDENTIALS_B64;
+  if (credsB64) {
+    try {
+      const credsJson = Buffer.from(credsB64, "base64").toString("utf-8");
+      const credPath = "/tmp/gcp-credentials.json";
+      writeFileSync(credPath, credsJson);
+      process.env.GOOGLE_APPLICATION_CREDENTIALS = credPath;
+    } catch (err) {
+      console.error("Failed to decode GCP credentials:", err);
+    }
+  }
+}
 
 function getProjectConfig() {
   const project = process.env.GCP_PROJECT_ID;
@@ -24,6 +40,7 @@ function getProjectConfig() {
 function getClient(): GoogleGenAI {
   if (cachedClient) return cachedClient;
 
+  setupCredentials();
   const { project, location } = getProjectConfig();
   cachedClient = new GoogleGenAI({ vertexai: true, project, location });
   return cachedClient;
