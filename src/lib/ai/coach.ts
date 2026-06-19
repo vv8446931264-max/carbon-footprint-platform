@@ -68,41 +68,22 @@ export async function generateCoachReport(
   const categorySummary = input.topCategories
     .map((entry) => {
       const pct = totalCategories > 0 ? ((entry.kgCo2e / totalCategories) * 100).toFixed(0) : "0";
-      return `- ${entry.category}: ${entry.kgCo2e.toFixed(1)} kg CO2e (${pct}% of total)`;
+      return `- ${entry.category}: ${entry.kgCo2e.toFixed(1)} kg (${pct}%)`;
     })
     .join("\n");
 
   const dailyKg = input.totalKgCo2e / Math.max(input.periodDays, 1);
   const annualizedTonnes = (dailyKg * 365) / 1000;
-  const overUnder = annualizedTonnes > 2 ? "over" : "under";
-  const pctDiff = Math.abs(((annualizedTonnes - 2) / 2) * 100).toFixed(0);
-  const topCategory = input.topCategories[0]?.category ?? "none";
-  const topPct = totalCategories > 0 && input.topCategories[0]
-    ? ((input.topCategories[0].kgCo2e / totalCategories) * 100).toFixed(0)
-    : "0";
+  const targetStatus = annualizedTonnes <= 2 ? "on track" : "above target";
 
-  const budgetLine = input.dailyBudgetKg
-    ? `Daily budget: ${input.dailyBudgetKg.toFixed(1)} kg/day (current daily avg: ${dailyKg.toFixed(1)} kg/day)`
-    : "";
+  const prompt = `User data (last ${input.periodDays} days):
+Total: ${input.totalKgCo2e.toFixed(1)} kg CO2e
+Annualized: ${annualizedTonnes.toFixed(1)} tonnes/year (Paris target: 2.0 t/yr, status: ${targetStatus})
 
-  const memoryLine = input.previousSummary
-    ? `Your previous analysis was: "${input.previousSummary}". Focus on what has changed since then.`
-    : "";
+Top categories:
+${categorySummary || "(no activities logged yet)"}
 
-  const prompt = `Period: last ${input.periodDays} day(s)
-Total emissions: ${input.totalKgCo2e.toFixed(1)} kg CO2e
-Annualized pace: ${annualizedTonnes.toFixed(1)} tonnes/year
-Paris-aligned target: 2.0 tonnes/year (currently ${overUnder} target by ${pctDiff}%)
-${budgetLine}
-
-Top contributing categories:
-${categorySummary || "- (no activity logged yet)"}
-
-The user's TOP emission source is "${topCategory}" at ${topPct}% of total.
-${memoryLine}
-
-Write the JSON report now. Reference specific categories and percentages.
-Do NOT give generic advice. Every tip MUST name the specific category it addresses.`;
+Write a brief, specific report tied to these actual categories. Every tip must name a category and reference the user's numbers.`;
 
   let rawText: string;
   try {
