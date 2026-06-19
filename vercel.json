@@ -1,11 +1,4 @@
 {
-  "name": "carbon-footprint-platform",
   "buildCommand": "npm run build",
-  "outputDirectory": ".next",
-  "env": [
-    "GCP_PROJECT_ID",
-    "GCP_LOCATION",
-    "GCP_GEMINI_MODEL",
-    "GOOGLE_APPLICATION_CREDENTIALS"
-  ]
+  "outputDirectory": ".next"
 }
