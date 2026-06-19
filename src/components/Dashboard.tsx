@@ -1,15 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import {
-  Compass,
-  Download,
-  Keyboard,
-  Search,
-  Trash2,
-  X,
-} from "lucide-react";
-import type { ActivityCategory, LoggedActivity } from "@/types/activity";
+import { Compass } from "lucide-react";
+import type { LoggedActivity } from "@/types/activity";
 import {
   entriesWithinDays,
   totalEmissions,
@@ -38,10 +31,9 @@ import {
   annualBreakdownFromEntries,
   hasModelledFootprint,
 } from "@/lib/simulator/reductionSimulator";
-import { CATEGORY_LABELS, CATEGORY_VISUALS } from "@/lib/ui/categories";
+import { CATEGORY_LABELS } from "@/lib/ui/categories";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { ActivityLogger } from "./ActivityLogger";
-import { ActivityList } from "./ActivityList";
 import { AppHeader } from "./AppHeader";
 import { BaselineEstimator } from "./BaselineEstimator";
 import { CategoryBreakdown } from "./CategoryBreakdown";
@@ -55,10 +47,12 @@ import { ReceiptUpload } from "./ReceiptUpload";
 import { ReductionSimulator } from "./ReductionSimulator";
 import { SiteFooter } from "./SiteFooter";
 import { Toast } from "./Toast";
+import { Confetti } from "./dashboard/Confetti";
+import { QuickLogSheet, ShortcutsModal } from "./dashboard/dialogs";
+import { RecentActivity } from "./dashboard/RecentActivity";
 
+/** Reporting window for the dashboard's headline metrics. */
 const PERIOD_DAYS = 30;
-// How many activities to show before "Show more"
-const DEFAULT_VISIBLE = 5;
 
 interface ToastState {
   message: string;
@@ -68,8 +62,6 @@ interface ToastState {
 const cardClass = "glass-card rounded-[24px] p-6 shadow-lg";
 
 const gridRow = "grid gap-5 md:grid-cols-2";
-
-const ALL_CATEGORIES = Object.keys(CATEGORY_VISUALS) as ActivityCategory[];
 
 /**
  * Entry counts that earn a celebration. Confetti on every log is noise; only
@@ -83,8 +75,12 @@ const MILESTONES: Record<number, string> = {
   100: "Century! 100 activities logged! 🎉",
 };
 
-type SortOrder = "newest" | "emissions" | "cost";
-
+/**
+ * The main application screen: headline metrics, the activity logger, receipt
+ * upload, coaching, and the recent-activity log. Owns the entry list and the
+ * derived metrics; presentation-heavy concerns (modals, confetti, the recent
+ * list's own filter/sort UI) live in `./dashboard/*`.
+ */
 export function Dashboard() {
   const [entries, setEntries] = useState<LoggedActivity[]>(() => loadLog());
   const [dailyBudgetKg, setDailyBudgetKg] = useState<number>(() =>
@@ -94,13 +90,8 @@ export function Dashboard() {
     loadBaseline(),
   );
   const [retaking, setRetaking] = useState(false);
-  const [confirmingClear, setConfirmingClear] = useState(false);
   const [toast, setToast] = useState<ToastState | null>(null);
   const [prefill, setPrefill] = useState<string | undefined>(undefined);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<"all" | ActivityCategory>("all");
-  const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
-  const [visibleCount, setVisibleCount] = useState(DEFAULT_VISIBLE);
   const [confettiKey, setConfettiKey] = useState(0);
   const [showShortcutsHelp, setShowShortcutsHelp] = useState(false);
   const [showLogSheet, setShowLogSheet] = useState(false);
@@ -113,12 +104,6 @@ export function Dashboard() {
   useEffect(() => {
     saveDailyBudget(dailyBudgetKg);
   }, [dailyBudgetKg]);
-
-  // Reset visible count whenever search, filter, or sort changes
-  useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
-    setVisibleCount(DEFAULT_VISIBLE);
-  }, [searchQuery, categoryFilter, sortOrder]);
 
   const scrollToLogger = useCallback(() => {
     loggerRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
@@ -165,7 +150,6 @@ export function Dashboard() {
 
   function handleClearAll() {
     const snapshot = entries;
-    setConfirmingClear(false);
     setEntries([]);
     setToast({
       message: "Cleared all activity",
@@ -195,7 +179,10 @@ export function Dashboard() {
     {
       key: "z",
       ctrl: true,
-      handler: () => { toastRef.current?.undo?.(); setToast(null); },
+      handler: () => {
+        toastRef.current?.undo?.();
+        setToast(null);
+      },
     },
     { key: "e", ctrl: true, handler: handleExport },
     { key: "?", handler: () => setShowShortcutsHelp((v) => !v) },
@@ -271,25 +258,6 @@ export function Dashboard() {
     };
   }, [entries, dailyBudgetKg]);
 
-  const filteredEntries = useMemo(() => {
-    let result = recentEntries;
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      result = result.filter((e) => e.description.toLowerCase().includes(q));
-    }
-    if (categoryFilter !== "all") {
-      result = result.filter((e) => e.activity.category === categoryFilter);
-    }
-    if (sortOrder === "emissions") {
-      result = [...result].sort((a, b) => b.emissionsKgCo2e - a.emissionsKgCo2e);
-    } else if (sortOrder === "cost") {
-      result = [...result].sort(
-        (a, b) => estimateCostUsd(b.activity) - estimateCostUsd(a.activity),
-      );
-    }
-    return result;
-  }, [recentEntries, searchQuery, categoryFilter, sortOrder]);
-
   const hasEntries = entries.length > 0;
 
   // Value before friction: new visitors land on the logger and get their first
@@ -303,10 +271,6 @@ export function Dashboard() {
     : baseline && baseline.annualTonnes > 0
       ? annualBreakdownFromBaseline(baseline.answers)
       : null;
-
-  const visibleEntries = filteredEntries.slice(0, visibleCount);
-  const remainingCount = filteredEntries.length - visibleCount;
-  const isFiltered = !!(searchQuery.trim() || categoryFilter !== "all");
 
   return (
     <>
@@ -358,14 +322,15 @@ export function Dashboard() {
         </div>
 
         {/* ROW 2: Primary action — Logger full-width */}
-        <section ref={loggerRef} aria-labelledby="logger-heading" className={cardClass}>
+        <section
+          ref={loggerRef}
+          aria-labelledby="logger-heading"
+          className={cardClass}
+        >
           <h2 id="logger-heading" className="sr-only">
             Log a new activity
           </h2>
-          <ActivityLogger
-            onLog={handleLog}
-            prefill={prefill}
-          />
+          <ActivityLogger onLog={handleLog} prefill={prefill} />
         </section>
 
         {showEstimator ? (
@@ -440,148 +405,16 @@ export function Dashboard() {
           <Methodology />
         )}
 
-        <section
-          aria-labelledby="recent-heading"
-          className="flex flex-col gap-3"
-        >
-          <div className="flex items-center justify-between gap-3">
-            <h2
-              id="recent-heading"
-              className="text-base font-semibold text-stone-900 dark:text-stone-50"
-            >
-              Recent activity
-            </h2>
-            {entries.length > 0 &&
-              (confirmingClear ? (
-                <span className="flex items-center gap-2 text-xs">
-                  <span className="text-stone-500 dark:text-stone-400">
-                    Clear everything?
-                  </span>
-                  <button
-                    type="button"
-                    onClick={handleClearAll}
-                    className="rounded-md bg-rose-600 px-2 py-1 font-semibold text-white transition hover:bg-rose-700 focus-visible:ring-2 focus-visible:ring-rose-500"
-                  >
-                    Clear all
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmingClear(false)}
-                    className="rounded-md px-2 py-1 font-medium text-stone-600 transition hover:text-stone-900 dark:text-stone-300 dark:hover:text-stone-100"
-                  >
-                    Cancel
-                  </button>
-                </span>
-              ) : (
-                <span className="flex items-center gap-1">
-                  <button
-                    type="button"
-                    onClick={handleExport}
-                    className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-stone-500 transition hover:text-emerald-700 focus-visible:ring-2 focus-visible:ring-emerald-500 dark:text-stone-400 dark:hover:text-emerald-400"
-                    title="Download your activity log as a JSON file"
-                  >
-                    <Download className="h-3.5 w-3.5" aria-hidden="true" />
-                    Export
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setConfirmingClear(true)}
-                    className="inline-flex items-center gap-1.5 rounded-md px-2 py-1 text-xs font-medium text-stone-500 transition hover:text-rose-600 focus-visible:ring-2 focus-visible:ring-rose-500 dark:text-stone-400 dark:hover:text-rose-400"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" aria-hidden="true" />
-                    Clear all
-                  </button>
-                </span>
-              ))}
-          </div>
-
-          {recentEntries.length > 0 && (
-            <div className="flex flex-col gap-2 sm:flex-row">
-              <div className="relative flex-1">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-stone-400 dark:text-stone-500" aria-hidden="true" />
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Search activities…"
-                  className="w-full rounded-lg border border-white/40 bg-white/60 py-2 pl-9 pr-9 text-sm outline-none backdrop-blur-sm transition focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-white/15 dark:bg-white/10 dark:text-stone-100"
-                />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={() => setSearchQuery("")}
-                    aria-label="Clear search"
-                    className="absolute right-1.5 top-1/2 flex h-8 w-8 -translate-y-1/2 items-center justify-center rounded-md text-stone-400 transition hover:bg-stone-100 hover:text-stone-600 dark:hover:bg-stone-800 dark:hover:text-stone-300"
-                  >
-                    <X className="h-4 w-4" aria-hidden="true" />
-                  </button>
-                )}
-              </div>
-              <select
-                value={categoryFilter}
-                onChange={(e) =>
-                  setCategoryFilter(e.target.value as "all" | ActivityCategory)
-                }
-                aria-label="Filter by category"
-                className="rounded-lg border border-white/40 bg-white/60 px-2.5 py-2 text-sm text-stone-700 outline-none backdrop-blur-sm transition focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-white/15 dark:bg-white/10 dark:text-stone-200"
-              >
-                <option value="all">All</option>
-                {ALL_CATEGORIES.map((cat) => (
-                  <option key={cat} value={cat}>
-                    {CATEGORY_LABELS[cat]}
-                  </option>
-                ))}
-              </select>
-              <select
-                value={sortOrder}
-                onChange={(e) => setSortOrder(e.target.value as SortOrder)}
-                aria-label="Sort activities"
-                className="rounded-lg border border-white/40 bg-white/60 px-2.5 py-2 text-sm text-stone-700 outline-none backdrop-blur-sm transition focus-visible:border-emerald-500 focus-visible:ring-2 focus-visible:ring-emerald-500/40 dark:border-white/15 dark:bg-white/10 dark:text-stone-200"
-              >
-                <option value="newest">Newest</option>
-                <option value="emissions">Highest CO₂e</option>
-                <option value="cost">Highest cost</option>
-              </select>
-            </div>
-          )}
-
-          {/* Tell people (and screen readers) what the filters returned. */}
-          {recentEntries.length > 0 && isFiltered && (
-            <p
-              role="status"
-              aria-live="polite"
-              className="text-xs text-stone-500 dark:text-stone-400"
-            >
-              Showing {filteredEntries.length} of {recentEntries.length}{" "}
-              activities
-            </p>
-          )}
-
-          <div className={filteredEntries.length > 6 ? "max-h-[28rem] overflow-y-auto overscroll-contain rounded-xl" : undefined}>
-            <ActivityList
-              entries={visibleEntries}
-              onDelete={handleDelete}
-              onSelectExample={(text) => {
-                setPrefill(text);
-                scrollToLogger();
-              }}
-              isFiltered={isFiltered}
-            />
-
-            {remainingCount > 0 && (
-              <button
-                type="button"
-                onClick={() => setVisibleCount((n) => n + DEFAULT_VISIBLE)}
-                className="mt-1 w-full rounded-xl border border-white/30 bg-white/20 py-2.5 text-sm font-medium text-stone-700 backdrop-blur-sm transition hover:bg-white/40 hover:border-emerald-300 hover:text-emerald-700 dark:border-white/15 dark:bg-white/8 dark:text-stone-300 dark:hover:border-emerald-700 dark:hover:text-emerald-400"
-              >
-                Show {Math.min(remainingCount, DEFAULT_VISIBLE)} more
-                <span className="ml-1 text-stone-400 dark:text-stone-500">
-                  ({remainingCount} remaining)
-                </span>
-              </button>
-            )}
-          </div>
-        </section>
+        <RecentActivity
+          recentEntries={recentEntries}
+          onDelete={handleDelete}
+          onSelectExample={(text) => {
+            setPrefill(text);
+            scrollToLogger();
+          }}
+          onExport={handleExport}
+          onClearAll={handleClearAll}
+        />
       </div>
 
       <SiteFooter />
@@ -608,9 +441,7 @@ export function Dashboard() {
         </QuickLogSheet>
       )}
 
-      {confettiKey > 0 && (
-        <Confetti key={confettiKey} />
-      )}
+      {confettiKey > 0 && <Confetti key={confettiKey} />}
 
       {showShortcutsHelp && (
         <ShortcutsModal onClose={() => setShowShortcutsHelp(false)} />
@@ -618,184 +449,6 @@ export function Dashboard() {
     </>
   );
 }
-
-// ─── Confetti ─────────────────────────────────────────────────────────────────
-
-const CONFETTI_COLORS = ["#10b981", "#3b82f6", "#f59e0b", "#f43f5e", "#8b5cf6"];
-
-function Confetti() {
-  const particles = useMemo(() => {
-    return Array.from({ length: 14 }, (_, i) => ({
-      id: i,
-      // eslint-disable-next-line react-hooks/purity
-      left: `${6 + Math.random() * 88}%`,
-      // eslint-disable-next-line react-hooks/purity
-      delay: `${(Math.random() * 0.4).toFixed(2)}s`,
-      color: CONFETTI_COLORS[i % CONFETTI_COLORS.length],
-    }));
-  }, []);
-
-  return (
-    <div className="pointer-events-none fixed inset-0 overflow-hidden" aria-hidden="true">
-      {particles.map((p) => (
-        <div
-          key={p.id}
-          className="animate-confetti-fall absolute -top-3 h-2.5 w-2.5 rounded-sm"
-          style={{ left: p.left, animationDelay: p.delay, backgroundColor: p.color }}
-        />
-      ))}
-    </div>
-  );
-}
-
-// ─── Modal behaviour ──────────────────────────────────────────────────────────
-
-/**
- * Shared dialog plumbing: close on Escape, focus the dialog on open, and
- * return focus to whatever opened it when it unmounts.
- */
-function useDialog(onClose: () => void) {
-  const dialogRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const opener = document.activeElement as HTMLElement | null;
-    dialogRef.current?.focus();
-
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
-    }
-    window.addEventListener("keydown", onKeyDown);
-    return () => {
-      window.removeEventListener("keydown", onKeyDown);
-      opener?.focus();
-    };
-  }, [onClose]);
-
-  return dialogRef;
-}
-
-// ─── Quick-log bottom sheet (opened by the mobile FAB) ───────────────────────
-
-function QuickLogSheet({
-  onClose,
-  children,
-}: {
-  onClose: () => void;
-  children: React.ReactNode;
-}) {
-  const dialogRef = useDialog(onClose);
-
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="quick-log-heading"
-      className="fixed inset-0 z-50 flex items-end justify-center sm:items-center sm:p-4"
-    >
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      <div
-        ref={dialogRef}
-        tabIndex={-1}
-        className="relative w-full max-w-lg rounded-t-2xl border border-stone-200 bg-white p-6 pb-8 shadow-xl outline-none dark:border-stone-700 dark:bg-stone-900 sm:rounded-2xl sm:pb-6"
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2
-            id="quick-log-heading"
-            className="text-sm font-semibold text-stone-900 dark:text-stone-50"
-          >
-            Log an activity
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="rounded-md p-1 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-stone-800 dark:hover:text-stone-200"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-        </div>
-        {children}
-      </div>
-    </div>
-  );
-}
-
-// ─── Keyboard shortcuts modal ─────────────────────────────────────────────────
-
-const SHORTCUTS = [
-  { keys: ["Ctrl", "N"], label: "Focus the activity input" },
-  { keys: ["Ctrl", "Z"], label: "Undo the last action" },
-  { keys: ["Ctrl", "E"], label: "Export your data as JSON" },
-  { keys: ["?"], label: "Toggle this help panel" },
-];
-
-function ShortcutsModal({ onClose }: { onClose: () => void }) {
-  const dialogRef = useDialog(onClose);
-
-  return (
-    <div
-      role="dialog"
-      aria-modal="true"
-      aria-labelledby="shortcuts-heading"
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
-    >
-      <div
-        className="absolute inset-0 bg-black/40 backdrop-blur-sm"
-        onClick={onClose}
-        aria-hidden="true"
-      />
-      <div
-        ref={dialogRef}
-        tabIndex={-1}
-        className="relative w-full max-w-sm rounded-2xl border border-stone-200 bg-white p-6 shadow-xl outline-none dark:border-stone-700 dark:bg-stone-900"
-      >
-        <div className="mb-4 flex items-center justify-between">
-          <h2
-            id="shortcuts-heading"
-            className="flex items-center gap-2 text-sm font-semibold text-stone-900 dark:text-stone-50"
-          >
-            <Keyboard className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
-            Keyboard shortcuts
-          </h2>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close shortcuts panel"
-            className="rounded-md p-1 text-stone-400 transition hover:bg-stone-100 hover:text-stone-700 dark:hover:bg-stone-800 dark:hover:text-stone-200"
-          >
-            <X className="h-4 w-4" aria-hidden="true" />
-          </button>
-        </div>
-        <ul className="flex flex-col gap-3">
-          {SHORTCUTS.map((shortcut) => (
-            <li key={shortcut.label} className="flex items-center justify-between gap-4">
-              <span className="text-sm text-stone-600 dark:text-stone-300">{shortcut.label}</span>
-              <span className="flex shrink-0 items-center gap-1">
-                {shortcut.keys.map((k) => (
-                  <kbd
-                    key={k}
-                    className="rounded border border-stone-300 bg-stone-100 px-1.5 py-0.5 font-mono text-xs text-stone-700 dark:border-stone-600 dark:bg-stone-800 dark:text-stone-200"
-                  >
-                    {k}
-                  </kbd>
-                ))}
-              </span>
-            </li>
-          ))}
-        </ul>
-        <p className="mt-4 text-xs text-stone-400 dark:text-stone-500">
-          Shortcuts are inactive when an input is focused.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// ─── Helpers ──────────────────────────────────────────────────────────────────
 
 function truncate(text: string, max = 40): string {
   return text.length > max ? `${text.slice(0, max - 1)}…` : text;
