@@ -125,6 +125,7 @@ export function unlockedAchievements(
   );
 }
 
+/** Returns every defined achievement, unlocked or not (e.g. for "x of N" counts). */
 export function allAchievements(): Achievement[] {
   return ACHIEVEMENT_DEFINITIONS.map(({ id, title, description, icon }) => ({
     id,

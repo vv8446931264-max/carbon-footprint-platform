@@ -22,10 +22,23 @@ export function totalsByCategory(entries: LoggedActivity[]): CategoryTotal[] {
     .sort((a, b) => b.kgCo2e - a.kgCo2e);
 }
 
+/**
+ * Sums the emissions of every entry, rounded to two decimals.
+ *
+ * @param entries - Logged activities to total.
+ * @returns Combined emissions in kg CO₂e.
+ */
 export function totalEmissions(entries: LoggedActivity[]): number {
   return round(entries.reduce((sum, entry) => sum + entry.emissionsKgCo2e, 0));
 }
 
+/**
+ * Filters entries to those logged within the trailing day window.
+ *
+ * @param entries - Logged activities to filter.
+ * @param days - Number of trailing days to keep, counting back from now.
+ * @returns Entries whose `loggedAt` falls inside the window.
+ */
 export function entriesWithinDays(
   entries: LoggedActivity[],
   days: number,
