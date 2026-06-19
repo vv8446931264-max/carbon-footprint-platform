@@ -69,11 +69,28 @@ export function ActivityList({ entries, onDelete, onSelectExample, isFiltered }:
                   <span className="text-sm font-semibold tabular-nums text-stone-900 dark:text-stone-100">
                     {entry.emissionsKgCo2e.toFixed(2)} kg CO₂e
                   </span>
-                  {costUsd > 0 && (
-                    <span className="text-xs tabular-nums text-stone-500 dark:text-stone-400">
-                      ≈ ${costUsd.toFixed(2)}
-                    </span>
-                  )}
+                  <span className="flex items-center gap-1.5">
+                    {entry.confidence && (
+                      <span
+                        title={
+                          entry.confidence === "high" ? "High confidence estimate" :
+                          entry.confidence === "medium" ? "Medium confidence, some details estimated" :
+                          "Low confidence, rough estimate"
+                        }
+                        className={`inline-block h-2 w-2 rounded-full ${
+                          entry.confidence === "high" ? "bg-emerald-500" :
+                          entry.confidence === "medium" ? "bg-amber-400" :
+                          "bg-rose-400"
+                        }`}
+                        aria-label={`${entry.confidence} confidence`}
+                      />
+                    )}
+                    {costUsd > 0 && (
+                      <span className="text-xs tabular-nums text-stone-500 dark:text-stone-400">
+                        ≈ ${costUsd.toFixed(2)}
+                      </span>
+                    )}
+                  </span>
                 </span>
                 {onDelete && (
                   <button

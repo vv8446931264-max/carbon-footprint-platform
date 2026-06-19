@@ -15,6 +15,8 @@ const requestSchema = z.object({
       }),
     )
     .max(10),
+  dailyBudgetKg: z.number().positive().max(1000).optional(),
+  previousSummary: z.string().max(500).nullable().optional(),
 });
 
 export async function POST(request: Request) {

@@ -104,6 +104,7 @@ export function ActivityLogger({ onLog, prefill }: ActivityLoggerProps) {
         activity: data.activity,
         emissionsKgCo2e:
           data.emissionsKgCo2e ?? calculateEmissionsKgCo2e(data.activity),
+        confidence: data.confidence,
       });
 
       setLowConfidence(data.confidence === "low");

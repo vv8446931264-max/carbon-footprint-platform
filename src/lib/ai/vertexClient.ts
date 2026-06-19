@@ -78,7 +78,7 @@ const inFlight = new Map<string, Promise<string>>();
 export async function generateText(
   prompt: string,
   systemInstruction?: string,
-  options: { cache?: boolean } = {},
+  options: { cache?: boolean; temperature?: number } = {},
 ): Promise<string> {
   const useCache = options.cache !== false;
   // Normalise the *key* (not the prompt we send) so trivially-different inputs
@@ -106,7 +106,7 @@ export async function generateText(
         model: MODEL_NAME,
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         config: {
-          temperature: 0.2,
+          temperature: options.temperature ?? 0.2,
           maxOutputTokens: 1024,
           ...(systemInstruction
             ? {

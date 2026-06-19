@@ -10,6 +10,8 @@ export interface CoachReportInput {
   totalKgCo2e: number;
   periodDays: number;
   topCategories: Array<{ category: string; kgCo2e: number }>;
+  dailyBudgetKg?: number;
+  previousSummary?: string | null;
 }
 
 export interface CoachReport {

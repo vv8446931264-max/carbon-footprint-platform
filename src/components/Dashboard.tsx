@@ -416,6 +416,7 @@ export function Dashboard() {
           periodDays={PERIOD_DAYS}
           topCategories={categoryTotals.slice(0, 5)}
           hasEntries={hasEntries}
+          dailyBudgetKg={dailyBudgetKg}
           onApplySwap={(prefill) => {
             setPrefill(prefill);
             scrollToLogger();

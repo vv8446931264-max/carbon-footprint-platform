@@ -93,4 +93,5 @@ export interface LoggedActivity {
   description: string;
   activity: Activity;
   emissionsKgCo2e: number;
+  confidence?: "high" | "medium" | "low";
 }

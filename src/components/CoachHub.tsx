@@ -38,12 +38,14 @@ interface CoachHubProps {
   periodDays: number;
   topCategories: CategoryTotal[];
   hasEntries: boolean;
+  dailyBudgetKg?: number;
   onApplySwap: (prefill: string) => void;
 }
 
 export function CoachHub({
   totalKgCo2e,
   periodDays,
+  dailyBudgetKg,
   topCategories,
   hasEntries,
   onApplySwap,
@@ -94,6 +96,8 @@ export function CoachHub({
             category,
             kgCo2e,
           })),
+          dailyBudgetKg,
+          previousSummary: report?.summary ?? null,
         }),
       });
       const data = (await res.json()) as CoachReport | { error: string };
