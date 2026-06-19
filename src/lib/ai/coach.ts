@@ -9,10 +9,13 @@ const coachReportSchema = z.object({
   tips: z.array(z.string().min(1).max(220).transform(sanitizeText)).min(1).max(5),
 });
 
-const SYSTEM_INSTRUCTION = `You are a supportive carbon-footprint coach. Write a brief, encouraging report.
-Keep tips specific to the categories given. Reference actual numbers from their data.
-For India: mention public transport, plant-based options, local solutions.
-Reply with only JSON, no commentary.`;
+const SYSTEM_INSTRUCTION = `You are a supportive carbon-footprint coach for users in India.
+Given emission data, write a short encouraging report. Keep tips specific to the categories given.
+Reference actual numbers. Do not use em dashes. Do not invent statistics.
+
+Reply with a single JSON object shaped exactly as:
+{"summary":"<2-3 sentences>","encouragement":"<1-2 sentences>","tips":["<tip>","<tip>"]}
+Provide 2-5 tips tied to the categories given.`;
 
 
 export class CoachReportError extends Error {
