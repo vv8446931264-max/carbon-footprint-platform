@@ -91,7 +91,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         initial={{ opacity: 0 }}
         animate={{ opacity: 1 }}
         transition={{ delay: 1.2, duration: 1 }}
-        className="relative z-10 mt-16 flex items-center gap-3 text-xs text-emerald-300/50"
+        className="relative z-10 mt-16 flex items-center gap-3 text-xs text-emerald-300/80"
       >
         <span>Powered by</span>
         <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-3 py-1 font-medium text-emerald-300/70">

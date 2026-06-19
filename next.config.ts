@@ -48,6 +48,10 @@ const nextConfig: NextConfig = {
   // image small and startup fast on Cloud Run.
   output: "standalone",
 
+  // Don't advertise the framework via the X-Powered-By header — one less
+  // detail handed to an attacker fingerprinting the stack.
+  poweredByHeader: false,
+
   // Apply hardening headers to every route. Defence-in-depth alongside the
   // per-route Zod validation, rate limiting, and AI-output schema guardrails.
   async headers() {

@@ -27,7 +27,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
       <HowItWorksSection />
       <CTASection onStart={onStart} />
 
-      <footer className="relative z-10 border-t border-white/5 py-8 text-center text-xs text-white/30">
+      <footer className="relative z-10 border-t border-white/5 py-8 text-center text-xs text-white/60">
         <p>
           Built with Next.js, Vertex AI, and Tailwind CSS. Deployed on Google
           Cloud Run.
@@ -37,7 +37,7 @@ export function LandingPage({ onStart }: LandingPageProps) {
             href="https://github.com/vv8446931264-max/carbon-footprint-platform"
             target="_blank"
             rel="noopener noreferrer"
-            className="text-emerald-400/50 hover:text-emerald-400"
+            className="text-emerald-400/90 hover:text-emerald-400"
           >
             View source on GitHub
           </a>

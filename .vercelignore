@@ -1,0 +1,14 @@
+.git
+.github
+.next
+node_modules
+npm-debug.log
+*.md
+.env.local
+.env.example
+coverage
+*.test.ts
+*.test.tsx
+.vscode
+.DS_Store
+tmp/
