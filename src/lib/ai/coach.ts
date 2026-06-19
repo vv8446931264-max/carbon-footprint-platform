@@ -106,7 +106,7 @@ Do NOT give generic advice. Every tip MUST name the specific category it address
 
   let rawText: string;
   try {
-    rawText = await generateText(prompt, SYSTEM_INSTRUCTION, { temperature: 0.6 });
+    rawText = await generateText(prompt, SYSTEM_INSTRUCTION);
   } catch (error) {
     throw new CoachReportError(
       "Failed to reach the AI service.",
