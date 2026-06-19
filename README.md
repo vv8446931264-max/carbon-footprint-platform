@@ -3,7 +3,9 @@
 A web platform that helps people **understand, track, and reduce** their personal carbon
 footprint — built for the _[Challenge 3] Carbon Footprint Awareness Platform_ hackathon track.
 
-**Live demo:** https://carbon-footprint-platform-1053195634368.us-central1.run.app
+**Live demo:**
+- 🚀 **Cloud Run (Primary):** https://carbon-footprint-platform-1053195634368.us-central1.run.app
+- 📦 **Vercel (Fallback):** https://carbon-footprint-platform-blond.vercel.app
 
 ---
 
