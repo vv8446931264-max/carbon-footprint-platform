@@ -97,7 +97,6 @@ export function CoachHub({
             kgCo2e,
           })),
           dailyBudgetKg,
-          previousSummary: report?.summary ?? null,
         }),
       });
       const data = (await res.json()) as CoachReport | { error: string };

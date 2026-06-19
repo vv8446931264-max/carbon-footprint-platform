@@ -124,7 +124,7 @@ export async function generateText(
         contents: [{ role: "user", parts: [{ text: prompt }] }],
         config: {
           temperature: options.temperature ?? 0.2,
-          maxOutputTokens: 1024,
+          maxOutputTokens: 2048,
           // Force the model to emit raw JSON — prevents gemini-2.5-flash from
           // wrapping output in markdown fences or prose, and stops thinking-mode
           // <think> blocks from appearing before the JSON payload.
