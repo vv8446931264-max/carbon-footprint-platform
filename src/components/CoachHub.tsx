@@ -116,39 +116,44 @@ export function CoachHub({
   return (
     <section aria-labelledby="coach-heading" className="glass-card rounded-[24px] p-6 sm:p-8">
       {/* ── Header ── */}
-      <div className="mb-5 space-y-3">
+      <div className="mb-6 space-y-4">
         {/* Progress bar */}
         <div className="flex items-center gap-4">
-          <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-stone-200/60 dark:bg-stone-800/60">
+          <div className="h-2 flex-1 overflow-hidden rounded-full bg-stone-200/40 shadow-inner dark:bg-stone-800/40">
             <div
-              className={`h-full rounded-full bg-gradient-to-r from-emerald-500 to-emerald-400 ${
+              className={`h-full rounded-full bg-gradient-to-r from-emerald-600 via-emerald-400 to-teal-400 shadow-[0_0_8px_rgba(16,185,129,0.4)] transition-all duration-700 ${
                 status === "loading" ? "animate-ai-progress" : "w-[85%]"
               }`}
             />
           </div>
-          <span className="shrink-0 text-xs font-medium text-stone-500 dark:text-stone-400">
-            {status === "loading" ? "AI Analysis in progress…" : "AI Analysis: 85% Complete..."}
+          <span className="shrink-0 text-xs font-semibold tabular-nums text-stone-500 dark:text-stone-400">
+            {status === "loading" ? "Analysing..." : "85%"}
           </span>
         </div>
 
         {/* Title + button */}
         <div className="flex flex-wrap items-center justify-between gap-3">
-          <h2
-            id="coach-heading"
-            className="text-2xl font-bold tracking-tight text-stone-900 dark:text-emerald-50 sm:text-3xl"
-          >
-            Interactive AI Coach Hub
-          </h2>
+          <div>
+            <h2
+              id="coach-heading"
+              className="text-2xl font-extrabold tracking-tight text-stone-900 dark:text-emerald-50 sm:text-3xl"
+            >
+              Interactive AI Coach Hub
+            </h2>
+            <p className="mt-0.5 text-sm text-stone-500 dark:text-stone-400">
+              Powered by Vertex AI
+            </p>
+          </div>
           <button
             type="button"
             onClick={handleGenerate}
             disabled={status === "loading" || !hasEntries}
-            className="inline-flex items-center gap-1.5 rounded-[12px] bg-gradient-to-b from-emerald-500 to-emerald-700 px-4 py-2 text-sm font-semibold text-white shadow-md shadow-emerald-600/20 transition-all hover:shadow-lg hover:shadow-emerald-600/30 active:scale-[0.98] focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
+            className="inline-flex items-center gap-2 rounded-[14px] bg-gradient-to-b from-emerald-500 to-emerald-700 px-5 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-600/25 transition-all duration-200 hover:shadow-xl hover:shadow-emerald-600/35 hover:brightness-110 active:scale-[0.97] focus-visible:ring-2 focus-visible:ring-emerald-500 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {status === "loading" && (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" aria-hidden="true" />
+              <Loader2 className="h-4 w-4 animate-spin" aria-hidden="true" />
             )}
-            {status === "loading" ? "Thinking…" : report ? "Regenerate" : "Get report"}
+            {status === "loading" ? "Thinking..." : report ? "Regenerate" : "Get report"}
           </button>
         </div>
       </div>
@@ -158,9 +163,11 @@ export function CoachHub({
         {/* ── Left (3/5): AI Analysis card + Smart Swaps ── */}
         <div className="flex flex-col gap-4 lg:col-span-3">
           {/* Vertex AI Analysis card */}
-          <div className="flex-1 rounded-[20px] bg-emerald-800 p-5 dark:bg-emerald-950/80">
-            <div className="mb-3 flex items-center gap-2">
-              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-700/70">
+          <div className="relative flex-1 overflow-hidden rounded-[20px] bg-gradient-to-br from-emerald-800 via-emerald-800 to-emerald-900 p-5 shadow-lg shadow-emerald-900/30 dark:from-emerald-950/90 dark:to-emerald-950/70">
+            <div className="absolute -right-8 -top-8 h-32 w-32 rounded-full bg-emerald-600/10 blur-2xl" />
+            <div className="absolute -bottom-4 -left-4 h-24 w-24 rounded-full bg-teal-500/10 blur-2xl" />
+            <div className="relative mb-3 flex items-center gap-2">
+              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-emerald-600/40 shadow-sm shadow-emerald-500/20">
                 <Sprout className="h-4 w-4 text-emerald-300" aria-hidden="true" />
               </div>
               <span className="text-xs font-semibold uppercase tracking-wider text-emerald-300">
@@ -266,15 +273,16 @@ export function CoachHub({
                 return (
                   <div
                     key={globalIdx}
-                    className="flex flex-col items-center gap-3 rounded-[16px] border border-white/40 bg-white/25 p-4 text-center backdrop-blur-md transition-all duration-200 hover:scale-[1.02] hover:bg-white/40 hover:shadow-lg hover:shadow-emerald-500/10 dark:border-white/10 dark:bg-white/5 dark:hover:bg-white/10"
+                    className="group/card relative flex flex-col items-center gap-3 rounded-[16px] border border-white/30 bg-gradient-to-b from-white/35 to-white/15 p-5 text-center backdrop-blur-md transition-all duration-300 hover:scale-[1.03] hover:border-emerald-300/50 hover:shadow-xl hover:shadow-emerald-500/15 dark:border-white/10 dark:from-white/8 dark:to-white/3 dark:hover:border-emerald-500/30 dark:hover:shadow-emerald-500/10"
                   >
-                    <span className="text-3xl" aria-hidden="true">{swap.icon}</span>
-                    <div>
-                      <p className="text-sm font-semibold text-stone-900 dark:text-stone-50">
+                    <div className="absolute inset-0 rounded-[16px] bg-gradient-to-br from-emerald-500/0 to-emerald-500/0 transition-all duration-300 group-hover/card:from-emerald-500/5 group-hover/card:to-emerald-500/0" />
+                    <span className="relative text-3xl transition-transform duration-300 group-hover/card:scale-110" aria-hidden="true">{swap.icon}</span>
+                    <div className="relative">
+                      <p className="text-sm font-bold text-stone-900 dark:text-stone-50">
                         {swap.from} → {swap.to}
                       </p>
-                      <p className="mt-0.5 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
-                        −{swap.savingKg} kg CO₂ {swap.unit}
+                      <p className="mt-1 text-xs font-semibold text-emerald-700 dark:text-emerald-400">
+                        -{swap.savingKg} kg CO₂ {swap.unit}
                       </p>
                     </div>
                     <button
@@ -284,7 +292,7 @@ export function CoachHub({
                         setApplied((s) => new Set(s).add(globalIdx));
                         onApplySwap(swap.prefill);
                       }}
-                      className="mt-auto w-full rounded-full border border-white/60 bg-white/50 px-4 py-2 text-xs font-bold text-emerald-800 backdrop-blur-sm transition hover:bg-white/70 disabled:cursor-default disabled:opacity-60 dark:border-white/20 dark:bg-white/10 dark:text-emerald-300 dark:hover:bg-white/20"
+                      className="relative mt-auto w-full rounded-full border border-emerald-200/60 bg-gradient-to-b from-white/70 to-white/40 px-4 py-2.5 text-xs font-bold text-emerald-800 shadow-sm backdrop-blur-sm transition-all duration-200 hover:border-emerald-300 hover:from-white/90 hover:to-white/60 hover:shadow-md active:scale-[0.97] disabled:cursor-default disabled:opacity-60 dark:border-emerald-700/30 dark:from-white/12 dark:to-white/5 dark:text-emerald-300 dark:hover:border-emerald-600/50 dark:hover:from-white/18 dark:hover:to-white/8"
                     >
                       {isApplied ? "✓ Applied" : "Apply Swap"}
                     </button>
@@ -296,11 +304,11 @@ export function CoachHub({
         </div>
 
         {/* ── Right (2/5): Projected Impact chart ── */}
-        <div className="flex flex-col rounded-[20px] border border-white/30 bg-white/30 p-5 backdrop-blur-sm dark:border-white/10 dark:bg-white/5 lg:col-span-2">
+        <div className="flex flex-col rounded-[20px] border border-white/20 bg-gradient-to-br from-white/35 to-white/15 p-5 shadow-lg shadow-stone-900/5 backdrop-blur-md transition-shadow duration-300 hover:shadow-xl hover:shadow-stone-900/8 dark:border-white/10 dark:from-white/8 dark:to-white/3 dark:shadow-black/10 lg:col-span-2">
           <h3 className="text-base font-bold text-stone-900 dark:text-emerald-50">
             Projected Impact
           </h3>
-          <p className="mb-4 text-xs text-stone-500 dark:text-stone-400">
+          <p className="mb-4 text-xs font-medium text-stone-500 dark:text-stone-400">
             Yearly Goal: 2-Tonne Target
           </p>
 
