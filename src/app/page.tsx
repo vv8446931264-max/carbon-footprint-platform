@@ -1,24 +1,10 @@
-"use client";
-
-import { useState } from "react";
-import { Dashboard } from "@/components/Dashboard";
 import { LandingPage } from "@/components/LandingPage";
 
+/**
+ * Marketing landing page at `/`. A server component — the interactive parts
+ * (animations, the "Start Tracking" links to `/dashboard`) live in the client
+ * components it composes, so the shell itself stays statically rendered.
+ */
 export default function Home() {
-  const [showDashboard, setShowDashboard] = useState(false);
-
-  if (!showDashboard) {
-    return <LandingPage onStart={() => setShowDashboard(true)} />;
-  }
-
-  return (
-    <div className="flex flex-1 flex-col items-center">
-      <main
-        id="main-content"
-        className="flex w-full flex-1 flex-col items-center"
-      >
-        <Dashboard />
-      </main>
-    </div>
-  );
+  return <LandingPage />;
 }

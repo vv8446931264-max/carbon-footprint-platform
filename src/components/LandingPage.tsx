@@ -1,31 +1,25 @@
-"use client";
-
 import { HeroSection } from "./landing/HeroSection";
 import { StatsSection } from "./landing/StatsSection";
 import { FeaturesSection } from "./landing/FeaturesSection";
 import { HowItWorksSection } from "./landing/HowItWorksSection";
 import { CTASection } from "./landing/CTASection";
 
-interface LandingPageProps {
-  /** Called when the visitor chooses to enter the app (CTA buttons). */
-  onStart: () => void;
-}
-
 /**
  * Marketing landing page shown before the dashboard. Composes the hero, stats,
- * features, how-it-works, and CTA sections; each lives in `./landing/*`.
+ * features, how-it-works, and CTA sections; each lives in `./landing/*`. The
+ * CTAs navigate to `/dashboard` via `next/link`.
  */
-export function LandingPage({ onStart }: LandingPageProps) {
+export function LandingPage() {
   return (
     <div className="relative min-h-screen bg-[#080F0B] text-white">
       {/* Global gradient backdrop */}
       <div className="pointer-events-none fixed inset-0 bg-gradient-to-b from-[#080F0B] via-[#0B1A12] to-[#0A1510]" />
 
-      <HeroSection onStart={onStart} />
+      <HeroSection />
       <StatsSection />
       <FeaturesSection />
       <HowItWorksSection />
-      <CTASection onStart={onStart} />
+      <CTASection />
 
       <footer className="relative z-10 border-t border-white/5 py-8 text-center text-xs text-white/60">
         <p>

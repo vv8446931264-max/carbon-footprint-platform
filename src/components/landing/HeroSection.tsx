@@ -1,16 +1,12 @@
 "use client";
 
+import Link from "next/link";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { ChevronDown, Leaf, Zap } from "lucide-react";
 import { Particles } from "./Particles";
 
-interface HeroSectionProps {
-  /** Enter the app (advance from landing page to the dashboard). */
-  onStart: () => void;
-}
-
 /** Full-screen hero: floating logo, animated headline, CTA, and particle field. */
-export function HeroSection({ onStart }: HeroSectionProps) {
+export function HeroSection() {
   const { scrollY } = useScroll();
   const heroY = useTransform(scrollY, [0, 600], [0, -150]);
   const heroOpacity = useTransform(scrollY, [0, 400], [1, 0]);
@@ -68,8 +64,8 @@ export function HeroSection({ onStart }: HeroSectionProps) {
         transition={{ delay: 0.9, duration: 0.8 }}
         className="relative z-10 mt-10 flex flex-wrap items-center justify-center gap-4"
       >
-        <button
-          onClick={onStart}
+        <Link
+          href="/dashboard"
           className="group relative overflow-hidden rounded-full bg-gradient-to-r from-emerald-500 to-emerald-600 px-8 py-3.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30"
         >
           <span className="relative z-10 flex items-center gap-2">
@@ -77,7 +73,7 @@ export function HeroSection({ onStart }: HeroSectionProps) {
             Start Tracking — Free
           </span>
           <div className="absolute inset-0 -z-0 bg-gradient-to-r from-emerald-400 to-cyan-400 opacity-0 transition-opacity group-hover:opacity-100" />
-        </button>
+        </Link>
         <a
           href="#how-it-works"
           className="rounded-full border border-white/20 bg-white/5 px-8 py-3.5 text-sm font-semibold text-white backdrop-blur-sm transition-all hover:bg-white/10"
