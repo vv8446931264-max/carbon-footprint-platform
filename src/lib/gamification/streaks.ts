@@ -35,7 +35,14 @@ export function dailyTotals(entries: LoggedActivity[]): DailyTotal[] {
 /**
  * Counts the current streak of consecutive days (ending today or yesterday)
  * where total emissions stayed at or below the daily budget. A gap of more
- * than one day, or a day over budget, breaks the streak.
+ * than one day, or a single day over budget, breaks the streak.
+ *
+ * @param entries - All logged activities; grouped into local-day totals.
+ * @param dailyBudgetKg - The user's own daily kg CO₂e budget. A non-positive
+ *   budget yields a streak of 0 (no meaningful target to beat).
+ * @param now - Injectable "today" for deterministic testing; defaults to the
+ *   current date.
+ * @returns The number of consecutive under-budget days, ending today/yesterday.
  */
 export function currentStreak(
   entries: LoggedActivity[],

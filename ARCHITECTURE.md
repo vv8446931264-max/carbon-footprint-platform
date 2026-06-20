@@ -144,9 +144,9 @@ tighten.
 
 ## Testing & CI
 
-70+ tests (Vitest + Testing Library + jest-axe) cover the emissions/cost engines,
-aggregation, gamification, storage, both AI parsers (mocked), the rate limiter, the cache,
-and component accessibility. **GitHub Actions** (`.github/workflows/ci.yml`) runs
+A comprehensive suite (Vitest + Testing Library + jest-axe, 30+ test files) covers the
+emissions/cost engines, aggregation, gamification, storage, both AI parsers (mocked), the
+rate limiter, the cache, error boundaries, and component accessibility. **GitHub Actions** (`.github/workflows/ci.yml`) runs
 lint → test → build on every push and PR; the build is proven to succeed without real cloud
 credentials (the Vertex client is lazy), so CI needs no secrets.
 

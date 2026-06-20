@@ -8,8 +8,23 @@ import {
 } from "./factors";
 
 /**
- * Pure function: computes kg CO2-equivalent for a single activity.
- * No I/O, no side effects — fully unit-testable in isolation.
+ * Computes kg CO₂-equivalent for a single activity using published emission
+ * factors. Pure: no I/O, no side effects — fully unit-testable in isolation.
+ *
+ * @param activity - A structured, schema-validated activity (transport, energy,
+ *   food, shopping, or waste) carrying its category-specific quantity.
+ * @returns Emissions in kg CO₂e, rounded to 3 decimal places.
+ *
+ * @example
+ * ```ts
+ * calculateEmissionsKgCo2e({ category: "transport", mode: "car_petrol", distanceKm: 10 });
+ * // => 1.92  (0.192 kg/km × 10 km)
+ * ```
+ *
+ * @remarks
+ * The `switch` is exhaustive over the {@link Activity} discriminated union, so
+ * adding a new category surfaces here as a compile error — by design. Emission
+ * factors live in `./factors.ts`; see ARCHITECTURE.md for their sourcing.
  */
 export function calculateEmissionsKgCo2e(activity: Activity): number {
   switch (activity.category) {
@@ -26,6 +41,13 @@ export function calculateEmissionsKgCo2e(activity: Activity): number {
   }
 }
 
+/**
+ * Sums a list of emission values, rounding the total to 3 decimals to avoid
+ * floating-point drift accumulating across many entries.
+ *
+ * @param values - Individual emission amounts in kg CO₂e.
+ * @returns The total in kg CO₂e, rounded to 3 decimal places.
+ */
 export function sumEmissions(values: number[]): number {
   return roundTo(
     values.reduce((total, value) => total + value, 0),

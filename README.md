@@ -140,9 +140,10 @@ when deployed.
 | `npm run dev`        | Start the dev server              |
 | `npm run build`      | Production build                  |
 | `npm run lint`       | Lint with ESLint                  |
-| `npm test`           | Run the test suite once           |
-| `npm run test:watch` | Run tests in watch mode           |
-| `npm run format`     | Format the codebase with Prettier |
+| `npm test`              | Run the test suite once             |
+| `npm run test:watch`    | Run tests in watch mode             |
+| `npm run test:coverage` | Run tests with a V8 coverage report |
+| `npm run format`        | Format the codebase with Prettier   |
 
 ## Testing
 
@@ -151,7 +152,8 @@ The emissions engine, cost engine, aggregation, gamification, storage, AI respon
 all have dedicated tests — including automated accessibility checks with `jest-axe`:
 
 ```bash
-npm test    # 70+ tests across 13 files
+npm test               # full unit + component + a11y suite (30+ test files)
+npm run test:coverage  # the same suite with a V8 coverage report
 ```
 
 ## Security

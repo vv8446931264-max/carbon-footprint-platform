@@ -11,7 +11,11 @@ import { CTASection } from "./landing/CTASection";
  */
 export function LandingPage() {
   return (
-    <div className="relative min-h-screen bg-[#080F0B] text-white">
+    <div
+      id="main-content"
+      tabIndex={-1}
+      className="relative min-h-screen bg-[#080F0B] text-white outline-none"
+    >
       {/* Global gradient backdrop */}
       <div className="pointer-events-none fixed inset-0 bg-gradient-to-b from-[#080F0B] via-[#0B1A12] to-[#0A1510]" />
 

@@ -1,22 +1,9 @@
 "use client";
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Compass } from "lucide-react";
 import type { LoggedActivity } from "@/types/activity";
-import {
-  entriesWithinDays,
-  totalEmissions,
-  totalsByCategory,
-} from "@/lib/emissions/aggregate";
-import { suggestSwap } from "@/lib/emissions/compare";
-import { estimateCostUsd } from "@/lib/emissions/cost";
-import { localDayKey } from "@/lib/dates/localDay";
-import {
-  allAchievements,
-  currentStreak,
-  dailyTotals,
-  unlockedAchievements,
-} from "@/lib/gamification/streaks";
+import { allAchievements } from "@/lib/gamification/streaks";
 import { appendEntry, loadLog, saveLog } from "@/lib/storage/footprintLog";
 import { serializeLog } from "@/lib/storage/exportLog";
 import {
@@ -31,7 +18,10 @@ import {
   annualBreakdownFromEntries,
   hasModelledFootprint,
 } from "@/lib/simulator/reductionSimulator";
-import { CATEGORY_LABELS } from "@/lib/ui/categories";
+import {
+  useDashboardMetrics,
+  PERIOD_DAYS,
+} from "@/hooks/useDashboardMetrics";
 import { useKeyboardShortcuts } from "@/hooks/useKeyboardShortcuts";
 import { ActivityLogger } from "./ActivityLogger";
 import { AppHeader } from "./AppHeader";
@@ -50,9 +40,6 @@ import { Toast } from "./Toast";
 import { Confetti } from "./dashboard/Confetti";
 import { QuickLogSheet, ShortcutsModal } from "./dashboard/dialogs";
 import { RecentActivity } from "./dashboard/RecentActivity";
-
-/** Reporting window for the dashboard's headline metrics. */
-const PERIOD_DAYS = 30;
 
 interface ToastState {
   message: string;
@@ -217,46 +204,7 @@ export function Dashboard() {
     streak,
     achievements,
     topCategoryLabel,
-  } = useMemo(() => {
-    const recent = entriesWithinDays(entries, PERIOD_DAYS);
-    const sum = totalEmissions(recent);
-    const cost =
-      Math.round(
-        recent.reduce(
-          (acc, entry) => acc + estimateCostUsd(entry.activity),
-          0,
-        ) * 100,
-      ) / 100;
-    const categories = totalsByCategory(recent);
-
-    const todayKey = localDayKey(new Date());
-    const dayTotal =
-      dailyTotals(entries).find((d) => d.date === todayKey)?.kgCo2e ?? 0;
-    const currentStreakVal = currentStreak(entries, dailyBudgetKg);
-    const swappable = entries.some(
-      (entry) => suggestSwap(entry.activity) !== null,
-    );
-    const unlocked = unlockedAchievements({
-      entryCount: entries.length,
-      streak: currentStreakVal,
-      hasSwappableEntry: swappable,
-    });
-
-    const topLabel = categories[0]
-      ? CATEGORY_LABELS[categories[0].category]
-      : null;
-
-    return {
-      recentEntries: recent,
-      total: sum,
-      totalCostUsd: cost,
-      categoryTotals: categories,
-      todayKg: dayTotal,
-      streak: currentStreakVal,
-      achievements: unlocked,
-      topCategoryLabel: topLabel,
-    };
-  }, [entries, dailyBudgetKg]);
+  } = useDashboardMetrics(entries, dailyBudgetKg);
 
   const hasEntries = entries.length > 0;
 

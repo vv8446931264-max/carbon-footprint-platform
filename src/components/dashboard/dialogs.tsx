@@ -3,9 +3,15 @@
 import { useEffect, useRef } from "react";
 import { Keyboard, X } from "lucide-react";
 
+/** Elements that can receive keyboard focus inside a dialog. */
+const FOCUSABLE_SELECTOR =
+  'a[href], button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), [tabindex]:not([tabindex="-1"])';
+
 /**
- * Shared dialog plumbing: close on Escape, focus the dialog on open, and
- * return focus to whatever opened it when it unmounts.
+ * Shared dialog plumbing: close on Escape, focus the dialog on open, **trap
+ * Tab focus inside the dialog** (WCAG 2.4.3 — focus never escapes to the
+ * inert background while a modal is open), and return focus to whatever opened
+ * it when it unmounts.
  *
  * @param onClose - Called when the user dismisses the dialog (Escape).
  * @returns A ref to attach to the focusable dialog container.
@@ -17,9 +23,41 @@ function useDialog(onClose: () => void) {
     const opener = document.activeElement as HTMLElement | null;
     dialogRef.current?.focus();
 
-    function onKeyDown(event: KeyboardEvent) {
-      if (event.key === "Escape") onClose();
+    function onKeyDown(event: KeyboardEvent): void {
+      if (event.key === "Escape") {
+        onClose();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const container = dialogRef.current;
+      if (!container) return;
+
+      const focusable = Array.from(
+        container.querySelectorAll<HTMLElement>(FOCUSABLE_SELECTOR),
+      );
+      if (focusable.length === 0) {
+        // Nothing tabbable inside — keep focus pinned to the container.
+        event.preventDefault();
+        container.focus();
+        return;
+      }
+
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey) {
+        if (active === first || active === container) {
+          event.preventDefault();
+          last.focus();
+        }
+      } else if (active === last) {
+        event.preventDefault();
+        first.focus();
+      }
     }
+
     window.addEventListener("keydown", onKeyDown);
     return () => {
       window.removeEventListener("keydown", onKeyDown);

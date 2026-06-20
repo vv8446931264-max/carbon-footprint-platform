@@ -1,0 +1,5 @@
+{
+    "kiroAgent.enableCodebaseIndexing": true,
+    "kiroAgent.enableDebugLogs": true,
+    "kiroAgent.enableTabAutocomplete": true
+}
