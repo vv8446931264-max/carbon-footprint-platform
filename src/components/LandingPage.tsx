@@ -4,12 +4,17 @@ import { FeaturesSection } from "./landing/FeaturesSection";
 import { HowItWorksSection } from "./landing/HowItWorksSection";
 import { CTASection } from "./landing/CTASection";
 
+interface LandingPageProps {
+  /** Reveal the dashboard in place when the visitor chooses to start. */
+  onStart: () => void;
+}
+
 /**
  * Marketing landing page shown before the dashboard. Composes the hero, stats,
  * features, how-it-works, and CTA sections; each lives in `./landing/*`. The
- * CTAs navigate to `/dashboard` via `next/link`.
+ * CTAs reveal the dashboard in place via `onStart`.
  */
-export function LandingPage() {
+export function LandingPage({ onStart }: LandingPageProps) {
   return (
     <div
       id="main-content"
@@ -19,11 +24,11 @@ export function LandingPage() {
       {/* Global gradient backdrop */}
       <div className="pointer-events-none fixed inset-0 bg-gradient-to-b from-[#080F0B] via-[#0B1A12] to-[#0A1510]" />
 
-      <HeroSection />
+      <HeroSection onStart={onStart} />
       <StatsSection />
       <FeaturesSection />
       <HowItWorksSection />
-      <CTASection />
+      <CTASection onStart={onStart} />
 
       <footer className="relative z-10 border-t border-white/5 py-8 text-center text-xs text-white/60">
         <p>

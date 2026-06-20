@@ -1,11 +1,26 @@
 # 🌱 Carbon Footprint Coach
 
+![Tests](https://img.shields.io/badge/tests-160%20passing-brightgreen)
+![Coverage](https://img.shields.io/badge/core%20coverage-%E2%89%A585%25-brightgreen)
+![Accessibility](https://img.shields.io/badge/accessibility-WCAG%202.1%20AA-brightgreen)
+![TypeScript](https://img.shields.io/badge/TypeScript-strict-blue)
+![Security](https://img.shields.io/badge/secrets-ADC%20only-brightgreen)
+![Google Cloud](https://img.shields.io/badge/Google%20Cloud-Vertex%20AI%20%2B%20Cloud%20Run-4285F4)
+
 A web platform that helps people **understand, track, and reduce** their personal carbon
 footprint — built for the _[Challenge 3] Carbon Footprint Awareness Platform_ hackathon track.
 
 **Live demo:**
 - 🚀 **Cloud Run (Primary):** https://carbon-footprint-platform-1053195634368.us-central1.run.app
 - 📦 **Vercel (Fallback):** https://carbon-footprint-platform-blond.vercel.app
+
+**Evaluation evidence:** [`docs/JUDGE_EVIDENCE.md`](./docs/JUDGE_EVIDENCE.md) maps each scoring
+criterion to where its evidence lives, backed by per-area reports:
+[Code Quality](./CODE_QUALITY_STANDARDS.md) ·
+[Security](./SECURITY.md) ·
+[Performance](./PERFORMANCE_REPORT.md) ·
+[Testing](./TESTING_STRATEGY.md) ·
+[Accessibility](./ACCESSIBILITY_COMPLIANCE_REPORT.md)
 
 ---
 
